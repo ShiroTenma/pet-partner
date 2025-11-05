@@ -83,6 +83,8 @@ dependencies {
     // (kalau belum ada)
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.6")
     implementation("androidx.navigation:navigation-compose:2.8.3")
-
-
+    implementation(libs.moshi.kotlin)
+    implementation("com.squareup.moshi:moshi-kotlin:1.15.1")
+    kapt("com.squareup.moshi:moshi-kotlin-codegen:1.15.1")
+    implementation(libs.moshi)
 }
