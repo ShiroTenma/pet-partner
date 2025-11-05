@@ -14,13 +14,18 @@ class AuthViewModel @Inject constructor(
     private val auth: AuthRepositoryImpl
 ) : ViewModel() {
 
-    // null kalau belum login / sudah logout
     val tokenState = auth.observeToken()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
     fun login(email: String, pass: String, onResult: (Boolean) -> Unit) {
         viewModelScope.launch {
             onResult(auth.login(email, pass))
+        }
+    }
+
+    fun register(name: String, email: String, pass: String, onResult: (Boolean) -> Unit) {
+        viewModelScope.launch {
+            onResult(auth.register(name, email, pass))
         }
     }
 

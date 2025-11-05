@@ -23,8 +23,20 @@ class AuthRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun register(name: String, email: String, pass: String): Boolean {
+        return try {
+            val res = api.register(RegisterReq(name, email, pass))
+            val ok = res.token.isNotBlank()
+            if (ok) session.setToken(res.token)
+            ok
+        } catch (t: Throwable) {
+            Log.e("AuthRepo", "register failed", t)
+            false
+        }
+    }
+
     override suspend fun logout() {
-        session.setToken(null)  // <-- ini penting
+        session.setToken(null)
     }
 
     override fun observeToken() = session.tokenFlow
