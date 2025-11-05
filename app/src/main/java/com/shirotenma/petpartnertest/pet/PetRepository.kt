@@ -4,12 +4,19 @@ import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 import javax.inject.Singleton
 
+interface PetRepository {
+    fun observePets(): Flow<List<Pet>>
+    fun observePet(id: Long): Flow<Pet?>
+    suspend fun upsert(pet: Pet): Long
+    suspend fun delete(pet: Pet)
+}
+
 @Singleton
-class PetRepository @Inject constructor(
+class PetRepositoryImpl @Inject constructor(
     private val dao: PetDao
-) {
-    fun observePets(): Flow<List<Pet>> = dao.observeAll()
-    fun observePet(id: Long): Flow<Pet?> = dao.observeById(id)
-    suspend fun upsert(pet: Pet) = dao.upsert(pet)
-    suspend fun delete(pet: Pet) = dao.delete(pet)
+) : PetRepository {
+    override fun observePets(): Flow<List<Pet>> = dao.observeAll()
+    override fun observePet(id: Long): Flow<Pet?> = dao.observeById(id)
+    override suspend fun upsert(pet: Pet): Long = dao.upsert(pet)
+    override suspend fun delete(pet: Pet) = dao.delete(pet)
 }

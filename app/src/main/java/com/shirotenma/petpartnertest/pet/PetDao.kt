@@ -1,20 +1,17 @@
 package com.shirotenma.petpartnertest.pet
 
-import androidx.room.Dao
-import androidx.room.Delete
-import androidx.room.Query
-import androidx.room.Upsert
+import androidx.room.*
 import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface PetDao {
-    @Query("SELECT * FROM pets ORDER BY name ASC")
+    @Query("SELECT * FROM pets ORDER BY name COLLATE NOCASE")
     fun observeAll(): Flow<List<Pet>>
 
-    @Query("SELECT * FROM pets WHERE id = :id")
+    @Query("SELECT * FROM pets WHERE id = :id LIMIT 1")
     fun observeById(id: Long): Flow<Pet?>
 
-    @Upsert
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsert(pet: Pet): Long
 
     @Delete

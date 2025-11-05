@@ -1,15 +1,39 @@
-*.iml
-.gradle
-/local.properties
-/.idea/caches
-/.idea/libraries
-/.idea/modules.xml
-/.idea/workspace.xml
-/.idea/navEditor.xml
-/.idea/assetWizardSettings.xml
-.DS_Store
-/build
-/captures
-.externalNativeBuild
-.cxx
+# === Android / Gradle ===
+.gradle/
+build/
+**/build/
+**/out/
 local.properties
+captures/
+.externalNativeBuild/
+.cxx/
+
+# APK / AAB artifacts
+*.apk
+*.ap_
+*.aab
+
+# Keystore & signing (JANGAN commit)
+*.keystore
+*.jks
+**/keystore/*
+**/release/*.keystore
+**/release/*.jks
+
+# Logs
+*.log
+
+# === Android Studio / IntelliJ ===
+*.iml
+.idea/
+.idea/*
+!.idea/codeStyles/
+!.idea/inspectionProfiles/
+
+# === OS files ===
+.DS_Store
+Thumbs.db
+
+# === Kotlin / misc ===
+.kotlinc/
+.kotlin/
