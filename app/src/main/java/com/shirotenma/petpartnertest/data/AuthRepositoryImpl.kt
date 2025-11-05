@@ -3,7 +3,9 @@ package com.shirotenma.petpartnertest.data
 import android.util.Log
 import com.shirotenma.petpartnertest.AuthRepository
 import javax.inject.Inject
+import javax.inject.Singleton
 
+@Singleton
 class AuthRepositoryImpl @Inject constructor(
     private val api: ApiService,
     private val session: SessionManager
@@ -22,7 +24,7 @@ class AuthRepositoryImpl @Inject constructor(
     }
 
     override suspend fun logout() {
-        session.setToken(null)
+        session.setToken(null)  // <-- ini penting
     }
 
     override fun observeToken() = session.tokenFlow

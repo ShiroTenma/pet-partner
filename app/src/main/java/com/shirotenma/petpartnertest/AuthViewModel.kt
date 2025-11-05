@@ -2,29 +2,29 @@ package com.shirotenma.petpartnertest
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.shirotenma.petpartnertest.data.AuthRepositoryImpl
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-data class AuthUiState(val loading: Boolean = false, val error: String? = null, val loggedIn: Boolean = false)
-
 @HiltViewModel
 class AuthViewModel @Inject constructor(
-    private val authRepository: AuthRepository
+    private val auth: AuthRepositoryImpl
 ) : ViewModel() {
-    private val _uiState = MutableStateFlow(AuthUiState())
-    val uiState = _uiState.asStateFlow()
 
-    fun login(email: String, pass: String) = viewModelScope.launch {
-        _uiState.value = AuthUiState(loading = true)
-        val ok = authRepository.login(email, pass)
-        _uiState.value = if (ok) AuthUiState(loggedIn = true) else AuthUiState(error = "Email/Password salah")
-    }
-    fun logout() = viewModelScope.launch {
-        authRepository.logout()
+    // null kalau belum login / sudah logout
+    val tokenState = auth.observeToken()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
+    fun login(email: String, pass: String, onResult: (Boolean) -> Unit) {
+        viewModelScope.launch {
+            onResult(auth.login(email, pass))
+        }
     }
 
+    fun logout() {
+        viewModelScope.launch { auth.logout() }
+    }
 }

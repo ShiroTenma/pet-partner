@@ -1,6 +1,8 @@
 package com.shirotenma.petpartnertest.data
 
 import android.content.Context
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
@@ -10,21 +12,22 @@ import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
 
-private val Context.dataStore by preferencesDataStore("session_prefs")
+private val Context.appDataStore: DataStore<Preferences> by preferencesDataStore(name = "session")
 private val KEY_TOKEN = stringPreferencesKey("auth_token")
 
 @Singleton
 class SessionManager @Inject constructor(
     @ApplicationContext private val context: Context
 ) {
-    val tokenFlow: Flow<String?> = context.dataStore.data.map { it[KEY_TOKEN] }
+    val tokenFlow: Flow<String?> =
+        context.appDataStore.data.map { prefs -> prefs[KEY_TOKEN] }
 
     suspend fun setToken(token: String?) {
-        context.dataStore.edit { prefs ->
+        context.appDataStore.edit { prefs ->
             if (token.isNullOrBlank()) {
-                prefs.remove(KEY_TOKEN)        // OK di MutablePreferences
+                prefs.remove(KEY_TOKEN)
             } else {
-                prefs[KEY_TOKEN] = token       // OK di MutablePreferences
+                prefs[KEY_TOKEN] = token
             }
         }
     }

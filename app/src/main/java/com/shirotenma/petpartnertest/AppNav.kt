@@ -8,6 +8,11 @@ import androidx.navigation.NavType
 import androidx.navigation.navArgument
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 
 object Route {
     const val SPLASH = "splash"
@@ -50,7 +55,23 @@ fun AppNavHost(nav: NavHostController) {
 
         // Home
         composable(Route.HOME) {
-            HomeScreen(nav = nav) // pastikan tombol ke Pets: nav.navigate(Route.PETS)
+            val gateVm: AuthViewModel = hiltViewModel()
+            val token by gateVm.tokenState.collectAsState()
+
+            var lastToken by remember { mutableStateOf<String?>(null) }
+
+            LaunchedEffect(token) {
+                val wasLoggedIn = !lastToken.isNullOrBlank()
+                val isLoggedOutNow = token.isNullOrBlank()
+                if (wasLoggedIn && isLoggedOutNow) {
+                    nav.navigateSingleTop(Route.LOGIN) {
+                        popUpTo(Route.HOME) { inclusive = true }
+                    }
+                }
+                lastToken = token
+            }
+
+            HomeScreen(nav = nav) // tombol logout di HomeScreen cukup: vm.logout()
         }
 
         // List Pets
