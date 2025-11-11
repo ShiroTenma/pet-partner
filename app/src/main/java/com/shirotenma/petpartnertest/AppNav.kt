@@ -13,6 +13,11 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+
 
 object Route {
     const val SPLASH = "splash"
@@ -20,8 +25,10 @@ object Route {
     const val REGISTER = "register"
     const val HOME = "home"
     const val PETS = "pets"
-    const val PET_EDIT = "pet_edit"          // add / edit base
+    const val PET_EDIT = "pet_edit"
+    const val SETTINGS = "settings"   // ⬅️ BARU
 }
+
 
 @Composable
 fun AppNavHost(nav: NavHostController) {
@@ -50,7 +57,16 @@ fun AppNavHost(nav: NavHostController) {
 
         // Register (opsional)
         composable(Route.REGISTER) {
-            RegisterScreen(onBack = { nav.popBackStack() })
+            RegisterScreen(
+                onBack = { nav.popBackStack() },
+                onRegistered = {
+                    // setelah registrasi sukses → arahkan ke HOME & bersihkan backstack auth
+                    nav.navigate(Route.HOME) {
+                        popUpTo(Route.LOGIN) { inclusive = true }
+                        launchSingleTop = true
+                    }
+                }
+            )
         }
 
         // Home
@@ -94,6 +110,13 @@ fun AppNavHost(nav: NavHostController) {
             val petId = backStackEntry.arguments!!.getLong("petId")
             com.shirotenma.petpartnertest.pet.PetEditScreen(nav = nav, petId = petId)
         }
+
+// Settings
+        composable(Route.SETTINGS) {
+            com.shirotenma.petpartnertest.settings.SettingsScreen(nav = nav)
+        }
+
+
     }
 }
 
