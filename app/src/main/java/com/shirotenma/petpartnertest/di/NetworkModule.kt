@@ -15,7 +15,6 @@ import okhttp3.OkHttpClient
 import okhttp3.Protocol
 import okhttp3.ResponseBody.Companion.toResponseBody
 import okhttp3.logging.HttpLoggingInterceptor
-import okio.Buffer
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
 import java.util.concurrent.ConcurrentHashMap
@@ -27,7 +26,7 @@ import javax.inject.Singleton
 private object FakeAuthDb {
     // email -> password
     val users = ConcurrentHashMap<String, String>().apply {
-        put("demo@x", "demo123") // akun demo supaya login uji cepat
+        put("demo@x", "demo123") // akun demo
     }
 }
 
@@ -42,7 +41,7 @@ object NetworkModule {
     @Provides
     @Singleton
     fun moshi(): Moshi = Moshi.Builder()
-        .add(KotlinJsonAdapterFactory())
+        .add(KotlinJsonAdapterFactory()) // opsional kalau pakai KSP; boleh dibiarkan
         .build()
 
     @Provides
@@ -50,14 +49,15 @@ object NetworkModule {
     fun okHttp(moshi: Moshi): OkHttpClient {
         val loginAdapter = moshi.adapter(LoginReq::class.java)
         val regAdapter = moshi.adapter(RegisterReq::class.java)
+        val json = "application/json".toMediaType()
 
         fun jsonResponse(req: okhttp3.Request, code: Int, body: String) =
             okhttp3.Response.Builder()
                 .code(code)
-                .message(if (code == 200) "OK" else "ERR")
+                .message(if (code in 200..299) "OK" else "ERR")
                 .request(req)
                 .protocol(Protocol.HTTP_1_1)
-                .body(body.toResponseBody("application/json".toMediaType()))
+                .body(body.toResponseBody(json))
                 .build()
 
         return OkHttpClient.Builder()
@@ -67,59 +67,71 @@ object NetworkModule {
             .addInterceptor { chain ->
                 val req = chain.request()
                 val path = req.url.encodedPath
-                val method = req.method
+                val isPost = req.method.equals("POST", ignoreCase = true)
 
-                // --- Mock: POST /auth/login ---
-                if (method == "POST" && path.endsWith("/auth/login")) {
-                    val buf = Buffer().also { req.body?.writeTo(it) }
-                    val bodyStr = buf.readUtf8()
-                    val payload = runCatching { loginAdapter.fromJson(bodyStr) }.getOrNull()
-                    val email = payload?.email.orEmpty()
-                    val pass = payload?.password.orEmpty()
+                // --- REGISTER ---
+                val isRegister = isPost && (path.endsWith("/auth/register") || path.contains("/auth/register/"))
+                if (isRegister) {
+                    val bodyStr = runCatching {
+                        val buf = okio.Buffer()
+                        req.body?.writeTo(buf)
+                        buf.readUtf8()
+                    }.getOrNull().orEmpty()
 
-                    val saved = FakeAuthDb.users[email]
-                    return@addInterceptor if (saved != null && saved == pass) {
-                        val json = """
-                          {"token":"dummy-token",
-                           "user":{"id":"1","name":"${email.substringBefore('@')}",
-                                   "email":"$email"}}
-                        """.trimIndent()
-                        jsonResponse(req, 200, json)
-                    } else {
-                        jsonResponse(req, 401, """{"error":"INVALID_CREDENTIALS"}""")
+                    val parsed = runCatching { regAdapter.fromJson(bodyStr) }.getOrNull()
+                    if (parsed == null) {
+                        return@addInterceptor jsonResponse(req, 400, """{"message":"Bad JSON"}""")
                     }
-                }
 
-                // --- Mock: POST /auth/register ---
-                if (method == "POST" && path.endsWith("/auth/register")) {
-                    val buf = Buffer().also { req.body?.writeTo(it) }
-                    val bodyStr = buf.readUtf8()
-                    val payload = runCatching { regAdapter.fromJson(bodyStr) }.getOrNull()
-                    val name = payload?.name?.ifBlank { "User" } ?: "User"
-                    val email = payload?.email.orEmpty()
-                    val pass = payload?.password.orEmpty()
+                    val email = parsed.email.trim().lowercase()
+                    val pass  = parsed.password
 
-                    return@addInterceptor if (FakeAuthDb.users.containsKey(email)) {
-                        jsonResponse(req, 409, """{"error":"EMAIL_EXISTS"}""")
-                    } else {
-                        FakeAuthDb.users[email] = pass
-                        val json = """
-                          {"token":"dummy-token",
-                           "user":{"id":"${FakeAuthDb.users.size}",
-                                   "name":"$name","email":"$email"}}
-                        """.trimIndent()
-                        jsonResponse(req, 200, json)
+                    // kalau sudah ada → 409
+                    if (FakeAuthDb.users.containsKey(email)) {
+                        return@addInterceptor jsonResponse(req, 409, """{"message":"Email already used"}""")
                     }
+
+                    // simpan user baru
+                    FakeAuthDb.users[email] = pass
+
+                    val okBody = """
+                        {"token":"dummy-token-reg",
+                         "user":{"id":"${email.hashCode()}","name":"${parsed.name}","email":"$email"}}
+                    """.trimIndent()
+                    return@addInterceptor jsonResponse(req, 200, okBody)
                 }
 
-                // --- Short-circuit host dummy supaya tidak pernah benar2 ke jaringan ---
-                if (req.url.host == "example.petpartner.api") {
-                    return@addInterceptor jsonResponse(
-                        req, 404, """{"error":"NO_BACKEND_MOCKED"}"""
-                    )
+                // --- LOGIN ---
+                val isLogin = isPost && (path.endsWith("/auth/login") || path.contains("/auth/login/"))
+                if (isLogin) {
+                    val bodyStr = runCatching {
+                        val buf = okio.Buffer()
+                        req.body?.writeTo(buf)
+                        buf.readUtf8()
+                    }.getOrNull().orEmpty()
+
+                    val parsed = runCatching { loginAdapter.fromJson(bodyStr) }.getOrNull()
+                    if (parsed == null) {
+                        return@addInterceptor jsonResponse(req, 400, """{"message":"Bad JSON"}""")
+                    }
+
+                    val email = parsed.email.trim().lowercase()
+                    val pass  = parsed.password
+
+                    val ok = FakeAuthDb.users[email]?.let { it == pass } == true
+                    if (!ok) {
+                        return@addInterceptor jsonResponse(req, 401, """{"message":"Invalid email or password"}""")
+                    }
+
+                    val okBody = """
+                        {"token":"dummy-token",
+                         "user":{"id":"${email.hashCode()}","name":"Demo","email":"$email"}}
+                    """.trimIndent()
+                    return@addInterceptor jsonResponse(req, 200, okBody)
                 }
 
-                chain.proceed(req)
+                // Fallback: balas 404 biar tak benar2 ke jaringan saat dev
+                return@addInterceptor jsonResponse(req, 404, """{"message":"Not mocked in dev"}""")
             }
             .addInterceptor(HttpLoggingInterceptor().apply {
                 level = HttpLoggingInterceptor.Level.BODY

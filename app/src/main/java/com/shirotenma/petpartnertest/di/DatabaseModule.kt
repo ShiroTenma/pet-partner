@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Room
 import com.shirotenma.petpartnertest.pet.PetDao
 import com.shirotenma.petpartnertest.pet.PetDatabase
+import com.shirotenma.petpartnertest.pet.record.PetRecordDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -21,6 +22,7 @@ object DatabaseModule {
             .fallbackToDestructiveMigration() // dev only
             .build()
 
-    @Provides
-    fun petDao(db: PetDatabase): PetDao = db.petDao()
+    @Provides fun petDao(db: PetDatabase): PetDao = db.petDao()
+
+    @Provides fun petRecordDao(db: PetDatabase): PetRecordDao = db.petRecordDao()
 }

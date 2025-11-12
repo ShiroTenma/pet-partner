@@ -16,6 +16,9 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.shirotenma.petpartnertest.Route
 import kotlinx.coroutines.delay
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Assignment
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -30,17 +33,20 @@ fun PetListScreen(
         mutableStateOf(TextFieldValue(""))
     }
 
+    // pakai derivedStateOf biar efisien
     val filtered by remember(pets, query) {
-        mutableStateOf(
+        derivedStateOf {
             if (query.text.isBlank()) pets
-            else pets.filter { p ->
+            else {
                 val q = query.text.trim().lowercase()
-                p.name.lowercase().contains(q) ||
-                        p.species.lowercase().contains(q) ||
-                        (p.birthDate ?: "").lowercase().contains(q) ||
-                        (p.notes ?: "").lowercase().contains(q)
+                pets.filter { p ->
+                    p.name.lowercase().contains(q) ||
+                            p.species.lowercase().contains(q) ||
+                            (p.birthDate ?: "").lowercase().contains(q) ||
+                            (p.notes ?: "").lowercase().contains(q)
+                }
             }
-        )
+        }
     }
 
     // Pull-to-refresh
@@ -49,7 +55,7 @@ fun PetListScreen(
 
     LaunchedEffect(refreshing) {
         if (refreshing) {
-            // TODO: panggil sync/refresh beneran kalau sudah ada (mis: vm.refresh())
+            // TODO: panggil vm.refresh() kalau sudah ada
             delay(700)
             refreshing = false
         }
@@ -67,7 +73,7 @@ fun PetListScreen(
         PullToRefreshBox(
             state = ptrState,
             isRefreshing = refreshing,
-            onRefresh = { refreshing = true }, // trigger refresh
+            onRefresh = { refreshing = true },
             modifier = Modifier
                 .padding(pad)
                 .fillMaxSize()
@@ -116,11 +122,26 @@ fun PetListScreen(
                                     ).joinToString(" • ")
                                     if (sub.isNotBlank()) Text(sub)
                                 },
+                                trailingContent = {
+                                    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                        // Edit Pet
+                                        IconButton(
+                                            onClick = { nav.navigate("${Route.PET_EDIT}/${pet.id}") }
+                                        ) {
+                                            Icon(Icons.Filled.Edit, contentDescription = "Edit")
+                                        }
+                                        // Records
+                                        IconButton(
+                                            onClick = { nav.navigate("${Route.RECORDS}/${pet.id}") }
+                                        ) {
+                                            Icon(Icons.Filled.Assignment, contentDescription = "Records")
+                                        }
+                                    }
+                                },
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .clickable {
-                                        nav.navigate("${Route.PET_EDIT}/${pet.id}")
-                                    }
+                                    // Sesuai poin #6: klik item → buka daftar Records
+                                    .clickable { nav.navigate("${Route.RECORDS}/${pet.id}") }
                                     .padding(horizontal = 8.dp, vertical = 4.dp)
                             )
                             Divider()

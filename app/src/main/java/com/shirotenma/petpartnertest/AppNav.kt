@@ -1,23 +1,12 @@
 package com.shirotenma.petpartnertest
 
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
-import androidx.navigation.navArgument
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-
+import androidx.navigation.navArgument
 
 object Route {
     const val SPLASH = "splash"
@@ -26,12 +15,13 @@ object Route {
     const val HOME = "home"
     const val PETS = "pets"
     const val PET_EDIT = "pet_edit"
-    const val SETTINGS = "settings"   // ⬅️ BARU
+    const val SETTINGS = "settings"
+    const val RECORDS = "records"
+    const val RECORD_EDIT = "record_edit"
 }
 
-
 @Composable
-fun AppNavHost(nav: NavHostController) {
+fun AppNavHost(nav: NavHostController, ownerName: String) {
     NavHost(navController = nav, startDestination = Route.SPLASH) {
 
         // Splash: cek token lalu arahkan ke HOME/LOGIN
@@ -60,7 +50,6 @@ fun AppNavHost(nav: NavHostController) {
             RegisterScreen(
                 onBack = { nav.popBackStack() },
                 onRegistered = {
-                    // setelah registrasi sukses → arahkan ke HOME & bersihkan backstack auth
                     nav.navigate(Route.HOME) {
                         popUpTo(Route.LOGIN) { inclusive = true }
                         launchSingleTop = true
@@ -69,11 +58,10 @@ fun AppNavHost(nav: NavHostController) {
             )
         }
 
-        // Home
+        // Home (SATU KALI SAJA, dan kirim ownerName)
         composable(Route.HOME) {
             val gateVm: AuthViewModel = hiltViewModel()
             val token by gateVm.tokenState.collectAsState()
-
             var lastToken by remember { mutableStateOf<String?>(null) }
 
             LaunchedEffect(token) {
@@ -87,7 +75,7 @@ fun AppNavHost(nav: NavHostController) {
                 lastToken = token
             }
 
-            HomeScreen(nav = nav) // tombol logout di HomeScreen cukup: vm.logout()
+            HomeScreen(nav = nav, ownerName = ownerName)
         }
 
         // List Pets
@@ -103,19 +91,43 @@ fun AppNavHost(nav: NavHostController) {
         // Edit Pet (arg wajib Long, non-nullable)
         composable(
             route = "${Route.PET_EDIT}/{petId}",
-            arguments = listOf(
-                navArgument("petId") { type = NavType.LongType } // non-nullable
-            )
+            arguments = listOf(navArgument("petId") { type = NavType.LongType })
         ) { backStackEntry ->
             val petId = backStackEntry.arguments!!.getLong("petId")
             com.shirotenma.petpartnertest.pet.PetEditScreen(nav = nav, petId = petId)
         }
 
-// Settings
+        // Settings
         composable(Route.SETTINGS) {
             com.shirotenma.petpartnertest.settings.SettingsScreen(nav = nav)
         }
+// List records milik petId
+        composable("${Route.RECORDS}/{petId}",
+            arguments = listOf(navArgument("petId"){ type = NavType.LongType })
+        ) { backStack ->
+            val petId = backStack.arguments!!.getLong("petId")
+            com.shirotenma.petpartnertest.pet.record.PetRecordListScreen(nav = nav, petId = petId)
+        }
 
+// Add record
+        composable("${Route.RECORD_EDIT}/{petId}",
+            arguments = listOf(navArgument("petId"){ type = NavType.LongType })
+        ) { backStack ->
+            val petId = backStack.arguments!!.getLong("petId")
+            com.shirotenma.petpartnertest.pet.record.PetRecordEditScreen(nav = nav, petId = petId, recordId = null)
+        }
+
+// Edit record
+        composable("${Route.RECORD_EDIT}/{petId}/{recordId}",
+            arguments = listOf(
+                navArgument("petId"){ type = NavType.LongType },
+                navArgument("recordId"){ type = NavType.LongType },
+            )
+        ) { backStack ->
+            val petId = backStack.arguments!!.getLong("petId")
+            val recordId = backStack.arguments!!.getLong("recordId")
+            com.shirotenma.petpartnertest.pet.record.PetRecordEditScreen(nav = nav, petId = petId, recordId = recordId)
+        }
 
     }
 }

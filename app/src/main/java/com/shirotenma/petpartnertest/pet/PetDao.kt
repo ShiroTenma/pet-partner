@@ -5,10 +5,10 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface PetDao {
-    @Query("SELECT * FROM pets ORDER BY name COLLATE NOCASE")
+    @Query("SELECT * FROM pets ORDER BY name")
     fun observeAll(): Flow<List<Pet>>
 
-    @Query("SELECT * FROM pets WHERE id = :id LIMIT 1")
+    @Query("SELECT * FROM pets WHERE id=:id")
     fun observeById(id: Long): Flow<Pet?>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)

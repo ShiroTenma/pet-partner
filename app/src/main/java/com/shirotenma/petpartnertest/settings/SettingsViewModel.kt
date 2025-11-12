@@ -1,56 +1,72 @@
-// app/src/main/java/com/shirotenma/petpartnertest/settings/SettingsViewModel.kt
 package com.shirotenma.petpartnertest.settings
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.update
 import javax.inject.Inject
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.launch
 
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
     private val repo: SettingsRepository
 ) : ViewModel() {
 
-    // Optional: stream read-only untuk yang butuh observe langsung
-    val uiFlow = repo.ui.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5_000),
-        initialValue = SettingsUi()
-    )
-
-    // State form (single source of truth untuk input)
-    var name: String by mutableStateOf("")
-        private set
-    var dark: Boolean by mutableStateOf(false)
-        private set
-    var notif: Boolean by mutableStateOf(true)
-        private set
+    private val _uiState = MutableStateFlow(SettingsUiState())
+    val uiState: StateFlow<SettingsUiState> = _uiState
 
     init {
-        // preload form dari repo
+        // Sinkronkan dari DataStore → UI
         viewModelScope.launch {
-            repo.ui.collect { s ->
-                name = s.ownerName
-                dark = s.darkMode
-                notif = s.notifEnabled
+            combine(repo.nameFlow, repo.darkFlow, repo.notifFlow) { name, dark, notif ->
+                Triple(name, dark, notif)
+            }.collect { (name, dark, notif) ->
+                _uiState.update { it.copy(ownerName = name, darkMode = dark, notifEnabled = notif) }
             }
         }
     }
 
-    fun onNameChange(v: String) { name = v }
-    fun onDarkChange(v: Boolean) { dark = v }
-    fun onNotifChange(v: Boolean) { notif = v }
+    // Handlers yang dipakai di SettingsScreen
+    fun onNameChange(newName: String) {
+        _uiState.update { it.copy(ownerName = newName) }
+    }
 
-    fun save(onDone: (() -> Unit)? = null) {
+    fun onDarkChange(enabled: Boolean) {
+        _uiState.update { it.copy(darkMode = enabled) }
+        // QoL: simpan langsung toggle
+        viewModelScope.launch { repo.setDark(enabled) }
+    }
+
+    fun onNotifChange(enabled: Boolean) {
+        _uiState.update { it.copy(notifEnabled = enabled) }
+        // QoL: simpan langsung toggle
+        viewModelScope.launch { repo.setNotif(enabled) }
+    }
+
+    fun save() {
+        val snapshot = _uiState.value
         viewModelScope.launch {
-            repo.save(name, dark, notif)
-            onDone?.invoke()
+            _uiState.update { it.copy(saving = true) }
+            try {
+                repo.setName(snapshot.ownerName.trim())
+                // dark/notif sudah disimpan realtime saat toggle; optional re-sync:
+                repo.setDark(snapshot.darkMode)
+                repo.setNotif(snapshot.notifEnabled)
+            } finally {
+                _uiState.update { it.copy(saving = false) }
+            }
+        }
+    }
+
+    fun resetToDefaults() {
+        viewModelScope.launch {
+            _uiState.update { it.copy(ownerName = "", darkMode = false, notifEnabled = true) }
+            repo.setName("")
+            repo.setDark(false)
+            repo.setNotif(true)
         }
     }
 }
