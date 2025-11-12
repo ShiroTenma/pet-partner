@@ -23,7 +23,6 @@ fun PetRecordEditScreen(
 
     val state = vm.ui.collectAsState().value
     if (state == null) {
-        // bisa tampilkan loading kecil
         Box(Modifier.fillMaxSize()) { CircularProgressIndicator() }
         return
     }
@@ -51,28 +50,28 @@ fun PetRecordEditScreen(
         ) {
             OutlinedTextField(
                 value = state.type,
-                onValueChange = { vm.edit { it.copy(type = itOrBlank(it, it = null, new = "") /*won't be used*/ ) } /* dummy to keep lambda shape */; vm.edit { s -> s.copy(type = it) } },
+                onValueChange = { new -> vm.edit { s -> s.copy(type = new) } },
                 label = { Text("Type (e.g. Vaccination)") },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth()
             )
             OutlinedTextField(
                 value = state.title,
-                onValueChange = { vm.edit { s -> s.copy(title = it) } },
+                onValueChange = { new -> vm.edit { s -> s.copy(title = new) } },
                 label = { Text("Title") },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth()
             )
             OutlinedTextField(
                 value = state.date,
-                onValueChange = { vm.edit { s -> s.copy(date = it) } },
+                onValueChange = { new -> vm.edit { s -> s.copy(date = new) } },
                 label = { Text("Date (yyyy-mm-dd)") },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth()
             )
             OutlinedTextField(
                 value = state.notes,
-                onValueChange = { vm.edit { s -> s.copy(notes = it) } },
+                onValueChange = { new -> vm.edit { s -> s.copy(notes = new) } },
                 label = { Text("Notes") },
                 modifier = Modifier.fillMaxWidth()
             )
@@ -84,7 +83,3 @@ fun PetRecordEditScreen(
         }
     }
 }
-
-// helper kosong agar onValueChange pertama tidak error saat kupakai pola copy dua tahap
-@Suppress("UNUSED_PARAMETER")
-private fun <T> itOrBlank(src: T, it: T? = null, new: T): T = src

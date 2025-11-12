@@ -12,7 +12,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class PetRecordViewModel @Inject constructor(
-    private val repo: PetRecordRepository
+    private val repo: PetRecordRepository,
+    savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
     data class Ui(
@@ -72,5 +73,9 @@ class PetRecordViewModel @Inject constructor(
             )
         }
         onDone()
+    }
+
+    suspend fun delete(recordId: Long) {
+        repo.delete(recordId)
     }
 }

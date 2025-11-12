@@ -29,5 +29,5 @@ class PetRecordRepository @Inject constructor(
         }
     }
 
-    suspend fun delete(r: PetRecord) = dao.delete(r)
+    suspend fun delete(id: Long) = dao.deleteById(id)
 }

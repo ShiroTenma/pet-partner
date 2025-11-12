@@ -110,15 +110,21 @@ fun AppNavHost(nav: NavHostController, ownerName: String) {
         }
 
 // Add record
-        composable("${Route.RECORD_EDIT}/{petId}",
+        composable(
+            route = "${Route.RECORD_EDIT}/{petId}",
             arguments = listOf(navArgument("petId"){ type = NavType.LongType })
         ) { backStack ->
             val petId = backStack.arguments!!.getLong("petId")
-            com.shirotenma.petpartnertest.pet.record.PetRecordEditScreen(nav = nav, petId = petId, recordId = null)
+            com.shirotenma.petpartnertest.pet.record.PetRecordEditScreen(
+                nav = nav,
+                petId = petId,
+                id = null       // ⬅️ dulu: recordId = null
+            )
         }
 
 // Edit record
-        composable("${Route.RECORD_EDIT}/{petId}/{recordId}",
+        composable(
+            route = "${Route.RECORD_EDIT}/{petId}/{recordId}",
             arguments = listOf(
                 navArgument("petId"){ type = NavType.LongType },
                 navArgument("recordId"){ type = NavType.LongType },
@@ -126,8 +132,13 @@ fun AppNavHost(nav: NavHostController, ownerName: String) {
         ) { backStack ->
             val petId = backStack.arguments!!.getLong("petId")
             val recordId = backStack.arguments!!.getLong("recordId")
-            com.shirotenma.petpartnertest.pet.record.PetRecordEditScreen(nav = nav, petId = petId, recordId = recordId)
+            com.shirotenma.petpartnertest.pet.record.PetRecordEditScreen(
+                nav = nav,
+                petId = petId,
+                id = recordId    // ⬅️ map ke parameter 'id'
+            )
         }
+
 
     }
 }

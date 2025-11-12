@@ -21,4 +21,11 @@ interface PetRecordDao {
 
     @Delete
     suspend fun delete(r: PetRecord)
+
+    @Query("DELETE FROM pet_records WHERE id = :id")
+    suspend fun deleteById(id: Long)
+
+    @Query("SELECT * FROM pet_records WHERE petId = :petId ORDER BY date DESC, id DESC")
+    fun listByPet(petId: Long): Flow<List<PetRecord>>
+
 }
