@@ -27,15 +27,15 @@ fun PetRecordEditScreen(
         return
     }
 
+    var showConfirm by remember { mutableStateOf(false) }
+
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text(if (state.id == null) "Add Record" else "Edit Record") },
                 actions = {
                     if (state.id != null) {
-                        TextButton(onClick = { vm.delete { nav.popBackStack() } }) {
-                            Text("Delete")
-                        }
+                        TextButton(onClick = { showConfirm = true }) { Text("Delete") }
                     }
                 }
             )
@@ -81,5 +81,21 @@ fun PetRecordEditScreen(
                 OutlinedButton(onClick = { nav.popBackStack() }) { Text("Cancel") }
             }
         }
+        if (showConfirm) {
+            AlertDialog(
+                onDismissRequest = { showConfirm = false },
+                title = { Text("Delete record?") },
+                text = { Text("This action cannot be undone.") },
+                confirmButton = {
+                    TextButton(onClick = {
+                        showConfirm = false
+                        vm.deleteCurrent { nav.popBackStack() }   // ⬅️ versi baru
+                    }) { Text("Delete") }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showConfirm = false }) { Text("Cancel") }
+                }
+            )
+        }
     }
-}
+    }

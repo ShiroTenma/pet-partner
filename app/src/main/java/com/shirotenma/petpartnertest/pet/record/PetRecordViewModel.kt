@@ -1,4 +1,3 @@
-// app/src/main/java/com/shirotenma/petpartnertest/pet/record/PetRecordViewModel.kt
 package com.shirotenma.petpartnertest.pet.record
 
 import androidx.lifecycle.ViewModel
@@ -12,8 +11,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class PetRecordViewModel @Inject constructor(
-    private val repo: PetRecordRepository,
-    savedStateHandle: SavedStateHandle
+    private val repo: PetRecordRepository
 ) : ViewModel() {
 
     data class Ui(
@@ -35,8 +33,12 @@ class PetRecordViewModel @Inject constructor(
     fun load(id: Long) = viewModelScope.launch {
         repo.get(id)?.let { r ->
             _ui.value = Ui(
-                id = r.id, petId = r.petId, type = r.type,
-                title = r.title, date = r.date, notes = r.notes ?: ""
+                id = r.id,
+                petId = r.petId,
+                type = r.type,
+                title = r.title,
+                date = r.date,
+                notes = r.notes ?: ""
             )
         }
     }
@@ -58,24 +60,16 @@ class PetRecordViewModel @Inject constructor(
         onDone()
     }
 
-    fun delete(onDone: () -> Unit) = viewModelScope.launch {
-        val s = _ui.value ?: return@launch
-        if (s.id != null) {
-            repo.delete(
-                PetRecord(
-                    id = s.id,
-                    petId = s.petId,
-                    type = s.type,
-                    title = s.title,
-                    date = s.date,
-                    notes = s.notes.ifBlank { null }
-                )
-            )
-        }
+    /** Hapus berdasar ID dari state, lalu callback */
+    fun deleteCurrent(onDone: () -> Unit) = viewModelScope.launch {
+        val id = _ui.value?.id ?: return@launch
+        repo.delete(id)
         onDone()
     }
 
-    suspend fun delete(recordId: Long) {
-        repo.delete(recordId)
+    /** Opsional: hapus langsung by id (dipakai jika mau panggil dari luar) */
+    fun deleteById(id: Long, onDone: () -> Unit) = viewModelScope.launch {
+        repo.delete(id)
+        onDone()
     }
 }
