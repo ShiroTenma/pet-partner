@@ -110,4 +110,10 @@ dependencies {
     // Hilt + WorkManager
     implementation("androidx.hilt:hilt-work:1.2.0")
     kapt("androidx.hilt:hilt-compiler:1.2.0")
+
+    implementation("io.coil-kt:coil-compose:2.7.0")
+    implementation("androidx.compose.material3:material3:1.4.0")
+    implementation(platform("androidx.compose:compose-bom:2025.01.00")) // contoh, pakai yang sesuai proyekmu
+    implementation("androidx.compose.material3:material3")
+
 }

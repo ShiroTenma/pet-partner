@@ -58,7 +58,7 @@ class PetRecordViewModel @Inject constructor(
             title = s.title,
             date = s.date,
             notes = s.notes.ifBlank { null },
-            attachmentUri = s.attachmentUri           // ⬅️ ikut disimpan
+            attachmentUri = s.attachmentUri
         )
         onDone()
     }

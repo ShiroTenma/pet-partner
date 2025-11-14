@@ -10,5 +10,8 @@ import javax.inject.Inject
 class PetRecordListViewModel @Inject constructor(
     private val repo: PetRecordRepository
 ) : ViewModel() {
-    fun records(petId: Long): Flow<List<PetRecord>> = repo.records(petId)
+    fun records(petId: Long) = repo.records(petId)
+
+    suspend fun exportJson(): String = repo.exportAllAsJson()
 }
+

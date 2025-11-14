@@ -1,20 +1,24 @@
 // app/src/main/java/com/shirotenma/petpartnertest/pet/record/PetRecordListScreen.kt
 package com.shirotenma.petpartnertest.pet.record
 
+import android.content.Intent
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.shirotenma.petpartnertest.Route
-
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.IosShare
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -27,10 +31,7 @@ fun PetRecordListScreen(
 
     // --- Filter & Sort state ---
     val allTypes = remember(items) {
-        items.map { it.type }
-            .filter { it.isNotBlank() }
-            .distinct()
-            .sorted()
+        items.map { it.type }.filter { it.isNotBlank() }.distinct().sorted()
     }
     var selectedType by remember { mutableStateOf<String?>(null) } // null = all
     var sortBy by remember { mutableStateOf("date") }               // "date" | "title"
@@ -46,12 +47,34 @@ fun PetRecordListScreen(
             }
     }
 
+    val ctx = LocalContext.current
+    val scope = rememberCoroutineScope()
+
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Medical Records") }) },
+        topBar = {
+            TopAppBar(
+                title = { Text("Medical Records") },
+                actions = {
+                    IconButton(onClick = {
+                        scope.launch {
+                            val json = vm.exportJson()
+                            val send = Intent(Intent.ACTION_SEND).apply {
+                                type = "application/json"
+                                putExtra(Intent.EXTRA_TEXT, json)
+                                putExtra(Intent.EXTRA_SUBJECT, "Pet Medical Records (JSON)")
+                            }
+                            ctx.startActivity(Intent.createChooser(send, "Share records as JSON"))
+                        }
+                    }) {
+                        Icon(Icons.Filled.IosShare, contentDescription = "Export JSON")
+                    }
+                }
+            )
+        },
         floatingActionButton = {
-            FloatingActionButton(
-                onClick = { nav.navigate("${Route.RECORD_EDIT}/$petId") }
-            ) { Text("+") }
+            FloatingActionButton(onClick = { nav.navigate("${Route.RECORD_EDIT}/$petId") }) {
+                Text("+")
+            }
         }
     ) { pad ->
         Column(
@@ -59,7 +82,7 @@ fun PetRecordListScreen(
                 .padding(pad)
                 .fillMaxSize()
         ) {
-            // --- Toolbar Filter & Sort ---
+            // --- Toolbar Filter & Sort (tanpa ExposedDropdownMenu) ---
             RecordListToolbar(
                 allTypes = allTypes,
                 selectedType = selectedType,
@@ -112,7 +135,6 @@ fun PetRecordListScreen(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun RecordListToolbar(
     allTypes: List<String>,
@@ -127,21 +149,19 @@ private fun RecordListToolbar(
             .padding(horizontal = 16.dp, vertical = 12.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        // Filter by type
+        // === Filter by type (DropdownMenu biasa) ===
         var typeExpanded by remember { mutableStateOf(false) }
-        ExposedDropdownMenuBox(
-            expanded = typeExpanded,
-            onExpandedChange = { typeExpanded = !typeExpanded },
-            modifier = Modifier.weight(1f)
-        ) {
+        Box(modifier = Modifier.weight(1f)) {
             OutlinedTextField(
                 value = selectedType ?: "All types",
                 onValueChange = {},
                 readOnly = true,
                 label = { Text("Filter") },
-                modifier = Modifier.menuAnchor().fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { typeExpanded = true }
             )
-            ExposedDropdownMenu(
+            DropdownMenu(
                 expanded = typeExpanded,
                 onDismissRequest = { typeExpanded = false }
             ) {
@@ -158,20 +178,19 @@ private fun RecordListToolbar(
             }
         }
 
-        // Sort by
+        // === Sort by (DropdownMenu biasa) ===
         var sortExpanded by remember { mutableStateOf(false) }
-        ExposedDropdownMenuBox(
-            expanded = sortExpanded,
-            onExpandedChange = { sortExpanded = !sortExpanded }
-        ) {
+        Box {
             OutlinedTextField(
                 value = if (sortBy == "title") "Title" else "Date",
                 onValueChange = {},
                 readOnly = true,
                 label = { Text("Sort") },
-                modifier = Modifier.menuAnchor().widthIn(min = 120.dp)
+                modifier = Modifier
+                    .widthIn(min = 120.dp)
+                    .clickable { sortExpanded = true }
             )
-            ExposedDropdownMenu(
+            DropdownMenu(
                 expanded = sortExpanded,
                 onDismissRequest = { sortExpanded = false }
             ) {
