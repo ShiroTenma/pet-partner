@@ -20,7 +20,8 @@ class PetRecordViewModel @Inject constructor(
         val type: String = "",
         val title: String = "",
         val date: String = "",
-        val notes: String = ""
+        val notes: String = "",
+        val attachmentUri: String? = null,   // ⬅️ BARU
     )
 
     private val _ui = MutableStateFlow<Ui?>(null)
@@ -38,7 +39,8 @@ class PetRecordViewModel @Inject constructor(
                 type = r.type,
                 title = r.title,
                 date = r.date,
-                notes = r.notes ?: ""
+                notes = r.notes ?: "",
+                attachmentUri = r.attachmentUri        // ⬅️ map ke UI
             )
         }
     }
@@ -55,19 +57,18 @@ class PetRecordViewModel @Inject constructor(
             type = s.type,
             title = s.title,
             date = s.date,
-            notes = s.notes.ifBlank { null }
+            notes = s.notes.ifBlank { null },
+            attachmentUri = s.attachmentUri           // ⬅️ ikut disimpan
         )
         onDone()
     }
 
-    /** Hapus berdasar ID dari state, lalu callback */
     fun deleteCurrent(onDone: () -> Unit) = viewModelScope.launch {
         val id = _ui.value?.id ?: return@launch
         repo.delete(id)
         onDone()
     }
 
-    /** Opsional: hapus langsung by id (dipakai jika mau panggil dari luar) */
     fun deleteById(id: Long, onDone: () -> Unit) = viewModelScope.launch {
         repo.delete(id)
         onDone()

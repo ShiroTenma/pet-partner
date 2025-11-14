@@ -7,7 +7,7 @@ import com.shirotenma.petpartnertest.pet.record.PetRecordDao
 
 @Database(
     entities = [Pet::class, com.shirotenma.petpartnertest.pet.record.PetRecord::class],
-    version = 2,
+    version = 3,
     exportSchema = true
 )
 abstract class PetDatabase : RoomDatabase() {

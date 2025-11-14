@@ -28,4 +28,13 @@ interface PetRecordDao {
     @Query("SELECT * FROM pet_records WHERE petId = :petId ORDER BY date DESC, id DESC")
     fun listByPet(petId: Long): Flow<List<PetRecord>>
 
+    @Query("SELECT * FROM pet_records")
+    suspend fun getAllOnce(): List<PetRecord>
+
+    // opsional: hanya yang tanggal valid ke depan
+    @Query("SELECT * FROM pet_records WHERE date IS NOT NULL AND date <> ''")
+    suspend fun getAllWithDateOnce(): List<PetRecord>
+
+
+
 }

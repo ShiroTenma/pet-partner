@@ -21,5 +21,6 @@ data class PetRecord(
     val type: String,
     val title: String,
     val date: String,
-    val notes: String? = null
+    val notes: String? = null,
+    val attachmentUri: String? = null // ⬅️ BARU
 )

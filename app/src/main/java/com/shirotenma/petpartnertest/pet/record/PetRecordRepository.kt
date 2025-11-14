@@ -19,7 +19,8 @@ class PetRecordRepository @Inject constructor(
         type: String,
         title: String,
         date: String,
-        notes: String?
+        notes: String?,
+        attachmentUri: String?
     ): Long {
         return if (id == null) {
             dao.insert(PetRecord(petId = petId, type = type, title = title, date = date, notes = notes))
