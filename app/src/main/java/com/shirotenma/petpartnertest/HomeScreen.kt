@@ -37,6 +37,8 @@ fun HomeScreen(
         ) {
             Button(onClick = { nav.navigate(Route.PETS) }) { Text("Open Pets") }
             OutlinedButton(onClick = { vm.logout() }) { Text("Logout") }
+            Button(onClick = { nav.navigate(Route.CHAT) }) { Text("Open Chatbot") }
+
         }
     }
 }

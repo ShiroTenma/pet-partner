@@ -19,6 +19,8 @@ import kotlinx.coroutines.delay
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Assignment
+import androidx.compose.material.icons.filled.PhotoCamera
+import androidx.compose.material.icons.filled.Chat
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -33,7 +35,6 @@ fun PetListScreen(
         mutableStateOf(TextFieldValue(""))
     }
 
-    // pakai derivedStateOf biar efisien
     val filtered by remember(pets, query) {
         derivedStateOf {
             if (query.text.isBlank()) pets
@@ -55,7 +56,7 @@ fun PetListScreen(
 
     LaunchedEffect(refreshing) {
         if (refreshing) {
-            // TODO: panggil vm.refresh() kalau sudah ada
+            // TODO: vm.refresh() kalau sudah ada
             delay(700)
             refreshing = false
         }
@@ -124,23 +125,29 @@ fun PetListScreen(
                                 },
                                 trailingContent = {
                                     Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                                        // Edit Pet
-                                        IconButton(
-                                            onClick = { nav.navigate("${Route.PET_EDIT}/${pet.id}") }
-                                        ) {
+                                        // Edit
+                                        IconButton(onClick = { nav.navigate("${Route.PET_EDIT}/${pet.id}") }) {
                                             Icon(Icons.Filled.Edit, contentDescription = "Edit")
                                         }
                                         // Records
-                                        IconButton(
-                                            onClick = { nav.navigate("${Route.RECORDS}/${pet.id}") }
-                                        ) {
+                                        IconButton(onClick = { nav.navigate("${Route.RECORDS}/${pet.id}") }) {
                                             Icon(Icons.Filled.Assignment, contentDescription = "Records")
+                                        }
+                                        // Scan (kamera)
+                                        IconButton(onClick = { nav.navigate("${Route.SCAN}/${pet.id}") }) {
+                                            Icon(Icons.Filled.PhotoCamera, contentDescription = "Scan")
+                                        }
+                                        // Chat
+                                        IconButton(onClick = {
+                                            nav.navigate("${Route.CHAT}?petId=${pet.id}")
+                                        }) {
+                                            Icon(Icons.Filled.Chat, contentDescription = "Chat")
                                         }
                                     }
                                 },
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    // Sesuai poin #6: klik item → buka daftar Records
+                                    // klik item → buka daftar Records
                                     .clickable { nav.navigate("${Route.RECORDS}/${pet.id}") }
                                     .padding(horizontal = 8.dp, vertical = 4.dp)
                             )

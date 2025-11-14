@@ -18,6 +18,9 @@ object Route {
     const val SETTINGS = "settings"
     const val RECORDS = "records"
     const val RECORD_EDIT = "record_edit"
+    const val SCAN = "scan"
+    const val DIAG_RESULT = "diag_result"
+    const val CHAT = "chat"
 }
 
 @Composable
@@ -139,7 +142,69 @@ fun AppNavHost(nav: NavHostController, ownerName: String) {
             )
         }
 
+        composable("${Route.SCAN}/{petId}",
+            arguments = listOf(navArgument("petId"){ type = NavType.LongType })
+        ) { back ->
+            val petId = back.arguments!!.getLong("petId")
+            com.shirotenma.petpartnertest.diagnose.ScanScreen(nav = nav, petId = petId)
+        }
 
+        composable(
+            route = "${Route.DIAG_RESULT}?petId={petId}&cond={cond}&sev={sev}&conf={conf}&tips={tips}&uri={uri}",
+            arguments = listOf(
+                navArgument("petId"){ type = NavType.LongType },
+                navArgument("cond"){ type = NavType.StringType },
+                navArgument("sev"){ type = NavType.StringType },
+                navArgument("conf"){ type = NavType.StringType },
+                navArgument("tips"){ type = NavType.StringType },
+                navArgument("uri"){ type = NavType.StringType },
+            )
+        ) { back ->
+            val petId   = back.arguments!!.getLong("petId")
+            val cond    = back.arguments!!.getString("cond")!!
+            val sev     = back.arguments!!.getString("sev")!!
+            val confStr = back.arguments!!.getString("conf")!!
+            val tipsStr = back.arguments!!.getString("tips")!!
+            val uriStr  = back.arguments!!.getString("uri")!!
+
+            com.shirotenma.petpartnertest.diagnose.DiagnoseResultScreen(
+                nav = nav,
+                petId = petId,
+                condition = cond,
+                severity = sev,
+                confidence = confStr.toDoubleOrNull() ?: 0.0,
+                tips = tipsStr.split("|;|").filter { it.isNotBlank() },
+                photoUri = uriStr
+            )
+        }
+
+        composable(
+            route = "${Route.CHAT}?petId={petId}&cond={cond}&sev={sev}&conf={conf}&tips={tips}&uri={uri}",
+            arguments = listOf(
+                navArgument("petId"){ type = NavType.LongType; defaultValue = -1L },
+                navArgument("cond"){ type = NavType.StringType; nullable = true },
+                navArgument("sev"){ type = NavType.StringType; nullable = true },
+                navArgument("conf"){ type = NavType.StringType; nullable = true },
+                navArgument("tips"){ type = NavType.StringType; nullable = true },
+                navArgument("uri"){ type = NavType.StringType; nullable = true },
+            )
+        ){ back ->
+            val petId   = back.arguments?.getLong("petId") ?: -1L
+            val cond    = back.arguments?.getString("cond")
+            val sev     = back.arguments?.getString("sev")
+            val confStr = back.arguments?.getString("conf")
+            val tipsStr = back.arguments?.getString("tips")
+            val uriStr  = back.arguments?.getString("uri")
+
+            com.shirotenma.petpartnertest.chat.ChatScreen(
+                nav = nav,
+                petId = petId.takeIf { it >= 0 },
+                cond = cond, sev = sev,
+                confidence = confStr?.toDoubleOrNull(),
+                tips = tipsStr?.split("|;|")?.filter { it.isNotBlank() } ?: emptyList(),
+                photoUri = uriStr
+            )
+        }
     }
 }
 
