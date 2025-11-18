@@ -6,12 +6,18 @@ import com.shirotenma.petpartnertest.pet.record.PetRecord
 import com.shirotenma.petpartnertest.pet.record.PetRecordDao
 
 @Database(
-    entities = [Pet::class, com.shirotenma.petpartnertest.pet.record.PetRecord::class],
-    version = 3,
+    entities = [
+        com.shirotenma.petpartnertest.pet.Pet::class,
+        com.shirotenma.petpartnertest.pet.record.PetRecord::class,
+        com.shirotenma.petpartnertest.diagnose.db.Diagnosis::class   // ⬅️ baru
+    ],
+    version = 4, // ⬅️ NAIKKAN
     exportSchema = true
 )
 abstract class PetDatabase : RoomDatabase() {
-    abstract fun petDao(): PetDao
+    abstract fun petDao(): com.shirotenma.petpartnertest.pet.PetDao
     abstract fun petRecordDao(): com.shirotenma.petpartnertest.pet.record.PetRecordDao
+    abstract fun diagnosisDao(): com.shirotenma.petpartnertest.diagnose.db.DiagnosisDao // ⬅️ baru
 }
+
 

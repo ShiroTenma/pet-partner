@@ -21,6 +21,8 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Assignment
 import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material.icons.filled.Chat
+import androidx.compose.material.icons.filled.History
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -142,6 +144,9 @@ fun PetListScreen(
                                             nav.navigate("${Route.CHAT}?petId=${pet.id}")
                                         }) {
                                             Icon(Icons.Filled.Chat, contentDescription = "Chat")
+                                        }
+                                        IconButton(onClick = { nav.navigate("diag_history/${pet.id}") }) {
+                                            Icon(Icons.Filled.History, contentDescription = "Diagnosis History")
                                         }
                                     }
                                 },

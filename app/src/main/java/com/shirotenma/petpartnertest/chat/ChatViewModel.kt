@@ -1,78 +1,41 @@
 package com.shirotenma.petpartnertest.chat
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-data class ChatMessage(
-    val id: Long,
-    val role: String,          // "user" | "assistant" | "system"
-    val text: String,
-    val photoUri: String? = null,
-    val suggestions: List<String> = emptyList()
-)
+data class ChatMessage(val from: String, val text: String)
 
-class ChatViewModel : ViewModel() {
+@HiltViewModel
+class ChatViewModel @Inject constructor() : ViewModel() {
     private val _messages = MutableStateFlow<List<ChatMessage>>(emptyList())
     val messages: StateFlow<List<ChatMessage>> = _messages
 
-    // Seed sekali ketika masuk dari hasil diagnosis
-    fun seedFromDiagnosis(
-        petId: Long?,
-        cond: String?,
-        sev: String?,
-        confidence: Double?,
-        tips: List<String>,
-        photoUri: String?
-    ) {
-        if (_messages.value.isNotEmpty()) return // cegah duplikasi saat recomposition
-
-        val header = buildString {
-            appendLine("📋 Ringkasan Diagnosis")
-            if (cond != null) appendLine("• Kondisi: $cond")
-            if (sev != null) appendLine("• Severity: $sev")
+    fun bootWithDiagnosis(cond: String?, sev: String?, confidence: Double?, tips: List<String>) {
+        val intro = buildString {
+            appendLine("Ringkasan diagnosis:")
+            if (!cond.isNullOrBlank()) appendLine("• Kondisi: $cond")
+            if (!sev.isNullOrBlank()) appendLine("• Tingkat: $sev")
             if (confidence != null) appendLine("• Confidence: ${"%.2f".format(confidence)}")
-            if (tips.isNotEmpty()) {
-                appendLine("• Saran awal:")
-                tips.forEach { appendLine("  – $it") }
-            }
-        }.trim()
-
-        _messages.value = listOf(
-            ChatMessage(
-                id = System.nanoTime(),
-                role = "assistant",
-                text = header,
-                photoUri = photoUri,
-                suggestions = listOf(
-                    "Apa langkah pertama yang harus saya lakukan?",
-                    "Apakah ini perlu ke dokter hewan segera?",
-                    "Apakah aman memberi obat rumahan?",
-                    "Bagaimana cara mencegah kambuh?"
-                )
-            )
-        )
-    }
-
-    fun sendUser(text: String) {
-        if (text.isBlank()) return
-        append(ChatMessage(System.nanoTime(), "user", text))
-        // mock balasan rules sederhana (nanti bisa diganti LLM/Cloud)
-        val reply = when {
-            text.contains("segera", ignoreCase = true) || text.contains("darurat", true) ->
-                "Jika terlihat nyeri berat, demam, lesu parah, atau keluar nanah darah ➜ segera bawa ke vet hari ini."
-            text.contains("obat", true) ->
-                "Hindari pemberian obat manusia. Untuk kulit, kompres hangat & jaga kering. Untuk mata, bersihkan dengan saline steril."
-            text.contains("mencegah", true) || text.contains("prevent", true) ->
-                "Jaga kebersihan, diet seimbang, jadwalkan vaksin & pemeriksaan gigi rutin. Batasi paparan iritan (debu, parfum)."
-            else ->
-                "Catat gejala harian (nafsu makan, energi, buang air). Jika memburuk 24–48 jam, hubungi dokter hewan."
+            if (tips.isNotEmpty()) appendLine("• Tips awal: ${tips.joinToString()}")
+            append("Silakan tanya apa pun tentang perawatan berikutnya.")
         }
-        append(ChatMessage(System.nanoTime(), "assistant", reply))
+        _messages.value = listOf(ChatMessage("bot", intro))
     }
 
-    fun clickSuggestion(s: String) = sendUser(s)
+    fun send(userText: String) = viewModelScope.launch {
+        _messages.value = _messages.value + ChatMessage("user", userText)
 
-    private fun append(msg: ChatMessage) = _messages.update { it + msg }
+        // MOCK jawaban lokal (nanti bisa diganti hit API)
+        val reply = when {
+            userText.contains("obat", true) -> "Untuk obat, konsultasikan dulu ke dokter hewan. Pantau nafsu makan & hidrasi."
+            userText.contains("makan", true) -> "Berikan porsi kecil tapi sering, pilih makanan mudah dicerna."
+            else -> "Catat gejala harian (makan, minum, aktivitas). Jika gejala memburuk 24–48 jam, kunjungi vet."
+        }
+        _messages.value = _messages.value + ChatMessage("bot", reply)
+    }
 }

@@ -21,6 +21,7 @@ object Route {
     const val SCAN = "scan"
     const val DIAG_RESULT = "diag_result"
     const val CHAT = "chat"
+    const val DIAG_HISTORY = "diag_history"
 }
 
 @Composable
@@ -188,7 +189,9 @@ fun AppNavHost(nav: NavHostController, ownerName: String) {
                 navArgument("tips"){ type = NavType.StringType; nullable = true },
                 navArgument("uri"){ type = NavType.StringType; nullable = true },
             )
-        ){ back ->
+        )
+
+        { back ->
             val petId   = back.arguments?.getLong("petId") ?: -1L
             val cond    = back.arguments?.getString("cond")
             val sev     = back.arguments?.getString("sev")
@@ -204,6 +207,12 @@ fun AppNavHost(nav: NavHostController, ownerName: String) {
                 tips = tipsStr?.split("|;|")?.filter { it.isNotBlank() } ?: emptyList(),
                 photoUri = uriStr
             )
+        }
+        composable("diag_history/{petId}",
+            arguments = listOf(navArgument("petId"){ type = NavType.LongType })
+        ){ back ->
+            val petId = back.arguments!!.getLong("petId")
+            com.shirotenma.petpartnertest.diagnose.DiagnosisHistoryScreen(nav = nav, petId = petId)
         }
     }
 }

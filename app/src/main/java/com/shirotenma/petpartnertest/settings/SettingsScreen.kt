@@ -16,8 +16,14 @@ import androidx.navigation.NavController
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowBack
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
+
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -28,6 +34,13 @@ fun SettingsScreen(
     val ui by vm.uiState.collectAsState()
     val ctx = LocalContext.current
     val versionText = remember { appVersionText(ctx) }
+    val notifPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        // hasil request permission → sinkronkan toggle
+        vm.onNotifChange(granted)
+    }
+
 
     Scaffold(
         topBar = {
@@ -78,7 +91,22 @@ fun SettingsScreen(
                 title = "Notifications",
                 subtitle = "Enable reminders & updates",
                 checked = ui.notifEnabled,
-                onCheckedChange = vm::onNotifChange
+                onCheckedChange = { enabled ->
+                    if (enabled && Build.VERSION.SDK_INT >= 33) {
+                        val granted = ContextCompat.checkSelfPermission(
+                            ctx, Manifest.permission.POST_NOTIFICATIONS
+                        ) == PackageManager.PERMISSION_GRANTED
+                        if (!granted) {
+                            // minta izin; callback di notifPermissionLauncher akan memanggil vm.onNotifChange(granted)
+                            notifPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                        } else {
+                            vm.onNotifChange(true)
+                        }
+                    } else {
+                        // Matikan di versi apa pun, atau nyalakan di <33 (izin tidak dibutuhkan)
+                        vm.onNotifChange(enabled)
+                    }
+                }
             )
 
             // Tombol aksi

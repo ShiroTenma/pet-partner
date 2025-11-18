@@ -17,11 +17,34 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
+import androidx.compose.ui.platform.LocalContext
+
 
 @Composable
 fun SplashScreen(onDone: (loggedIn: Boolean) -> Unit) {
     val vm: AuthGateViewModel = androidx.hilt.navigation.compose.hiltViewModel()
     val token by vm.tokenState.collectAsState()
+    val ctx = LocalContext.current
+
+    // === Minta izin POST_NOTIFICATIONS untuk Android 13+ ===
+    if (Build.VERSION.SDK_INT >= 33) {
+        val launcher = rememberLauncherForActivityResult(
+            ActivityResultContracts.RequestPermission()
+        ) { /* boleh diabaikan */ }
+
+        LaunchedEffect(Unit) {
+            val granted = ContextCompat.checkSelfPermission(
+                ctx, Manifest.permission.POST_NOTIFICATIONS
+            ) == PackageManager.PERMISSION_GRANTED
+            if (!granted) launcher.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
+    }
 
     // trigger animasi
     var start by remember { mutableStateOf(false) }

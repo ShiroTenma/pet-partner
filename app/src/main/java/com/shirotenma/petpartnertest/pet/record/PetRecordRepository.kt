@@ -24,7 +24,7 @@ class PetRecordRepository @Inject constructor(
         title: String,
         date: String,
         notes: String?,
-        attachmentUri: String?
+        attachmentUri: String? // pastikan signature sudah ada
     ): Long {
         return if (id == null) {
             dao.insert(
@@ -34,7 +34,7 @@ class PetRecordRepository @Inject constructor(
                     title = title,
                     date = date,
                     notes = notes,
-                    attachmentUri = attachmentUri
+                    attachmentUri = attachmentUri    // ⬅️ penting
                 )
             )
         } else {
@@ -46,7 +46,7 @@ class PetRecordRepository @Inject constructor(
                     title = title,
                     date = date,
                     notes = notes,
-                    attachmentUri = attachmentUri
+                    attachmentUri = attachmentUri    // ⬅️ penting
                 )
             )
             id

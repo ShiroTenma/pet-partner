@@ -14,6 +14,9 @@ interface ApiService {
 
     @POST("diagnose")
     suspend fun diagnose(@Body req: DiagnoseReq): DiagnoseResp
+
+    @POST("chat")
+    suspend fun chat(@Body text: String): ChatResp
 }
 
 @JsonClass(generateAdapter = true)
@@ -40,3 +43,6 @@ data class DiagnoseResp(
     val tips: List<String>,   // saran
     val bbox: List<Int>? = null // [x,y,w,h] opsional
 )
+
+@JsonClass(generateAdapter = true)
+data class ChatResp(val text: String)

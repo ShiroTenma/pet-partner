@@ -29,5 +29,8 @@ object DatabaseModule {
 
     @Provides fun petRecordDao(db: PetDatabase): PetRecordDao = db.petRecordDao()
 
+    @Provides
+    fun diagnosisDao(db: PetDatabase): com.shirotenma.petpartnertest.diagnose.db.DiagnosisDao = db.diagnosisDao()
+
 
 }
