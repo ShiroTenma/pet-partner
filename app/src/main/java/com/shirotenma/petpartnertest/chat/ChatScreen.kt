@@ -14,28 +14,30 @@ import androidx.navigation.NavController
 @Composable
 fun ChatScreen(
     nav: NavController,
-    petId: Long? = null,
-    cond: String? = null,
-    sev: String? = null,
-    confidence: Double? = null,
-    tips: List<String> = emptyList(),
-    photoUri: String? = null,
+    petId: Long?,
+    cond: String?,
+    sev: String?,
+    confidence: Double?,
+    tips: List<String>,
+    photoUri: String?,
     vm: ChatViewModel = hiltViewModel()
 ) {
-    LaunchedEffect(cond, sev, confidence, tips) {
-        vm.bootWithDiagnosis(cond, sev, confidence, tips)
+    // seed konteks sekali saat screen tampil
+    LaunchedEffect(Unit) {
+        vm.seedContext(petId, cond, sev, confidence, tips, photoUri)
     }
 
-    val msgs by vm.messages.collectAsState()
+    val messages by vm.messages.collectAsState()
     var input by remember { mutableStateOf("") }
+    var sending by remember { mutableStateOf(false) }
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Pet Assistant") }) },
+        topBar = { TopAppBar(title = { Text("Vet Chat") }) },
         bottomBar = {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(12.dp),
+                    .padding(8.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 OutlinedTextField(
@@ -43,12 +45,17 @@ fun ChatScreen(
                     onValueChange = { input = it },
                     modifier = Modifier.weight(1f),
                     singleLine = true,
-                    placeholder = { Text("Tanya sesuatu…") }
+                    label = { Text("Type a message…") }
                 )
                 Button(
-                    enabled = input.isNotBlank(),
-                    onClick = { vm.send(input); input = "" }
-                ) { Text("Send") }
+                    enabled = input.isNotBlank() && !sending,
+                    onClick = {
+                        sending = true
+                        vm.sendMessage(input)
+                        input = ""
+                        sending = false
+                    }
+                ) { Text(if (sending) "Sending…" else "Send") }
             }
         }
     ) { pad ->
@@ -59,18 +66,18 @@ fun ChatScreen(
                 .padding(12.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            items(msgs) { m ->
-                Surface(
-                    color = if (m.from == "bot") MaterialTheme.colorScheme.surfaceVariant
-                    else MaterialTheme.colorScheme.primaryContainer,
-                    tonalElevation = 1.dp,
-                    shape = MaterialTheme.shapes.medium,
+            items(messages, key = { it.id }) { m ->
+                val isBot = m.from == Sender.BOT
+                ElevatedCard(
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text(
-                        text = m.text,
-                        modifier = Modifier.padding(12.dp)
-                    )
+                    Column(Modifier.padding(12.dp)) {
+                        ProvideTextStyle(MaterialTheme.typography.labelMedium) {
+                            Text(if (isBot) "Assistant" else "You")
+                        }
+                        Spacer(Modifier.height(4.dp))
+                        Text(m.text)
+                    }
                 }
             }
         }

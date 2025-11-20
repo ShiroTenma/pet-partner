@@ -25,7 +25,8 @@ import java.io.File
 fun ScanScreen(
     nav: NavController,
     petId: Long,
-    vm: DiagnoseViewModel = hiltViewModel()
+    // di parameter composable:
+    vm: DiagnosisViewModel = hiltViewModel()
 ) {
     val ctx = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -72,21 +73,25 @@ fun ScanScreen(
         loading = true; error = null
         scope.launch {
             runCatching {
-                val resp = vm.run(ctx, petId, uri.toString())
+                val resp = vm.diagnose(ctx, petId, uri.toString())
                 fun enc(s: String) = java.net.URLEncoder.encode(s, "UTF-8")
-                val tips = resp.tips.joinToString("|;|")
+                val tipsPacked = resp.tips.joinToString("|;|")
                 nav.navigate(
-                    "${Route.DIAG_RESULT}?petId=$petId" +
-                            "&cond=${enc(resp.condition)}" +
-                            "&sev=${enc(resp.severity)}" +
-                            "&conf=${resp.confidence}" +
-                            "&tips=${enc(tips)}" +
-                            "&uri=${enc(uri.toString())}"
+                    "${Route.DIAG_RESULT}?" +
+                            "petId=$petId&" +
+                            "cond=${enc(resp.condition)}&" +
+                            "sev=${enc(resp.severity)}&" +
+                            "conf=${resp.confidence}&" +
+                            "tips=${enc(tipsPacked)}&" +
+                            "uri=${enc(uri.toString())}"
                 )
-            }.onFailure { error = it.message ?: "Diagnosis failed" }
+            }.onFailure {
+                error = it.message ?: "Diagnosis failed"
+            }
             loading = false
         }
     }
+
 
     Scaffold(
         topBar = { TopAppBar(title = { Text("Scan Kesehatan") }) }

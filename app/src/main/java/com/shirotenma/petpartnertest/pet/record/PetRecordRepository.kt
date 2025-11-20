@@ -17,6 +17,7 @@ class PetRecordRepository @Inject constructor(
 
     suspend fun get(id: Long): PetRecord? = dao.getById(id)
 
+    // pet/record/PetRecordRepository.kt
     suspend fun upsert(
         id: Long?,
         petId: Long,
@@ -24,7 +25,7 @@ class PetRecordRepository @Inject constructor(
         title: String,
         date: String,
         notes: String?,
-        attachmentUri: String? // pastikan signature sudah ada
+        attachmentUri: String?
     ): Long {
         return if (id == null) {
             dao.insert(
@@ -34,7 +35,7 @@ class PetRecordRepository @Inject constructor(
                     title = title,
                     date = date,
                     notes = notes,
-                    attachmentUri = attachmentUri    // ⬅️ penting
+                    attachmentUri = attachmentUri
                 )
             )
         } else {
@@ -46,12 +47,14 @@ class PetRecordRepository @Inject constructor(
                     title = title,
                     date = date,
                     notes = notes,
-                    attachmentUri = attachmentUri    // ⬅️ penting
+                    attachmentUri = attachmentUri
                 )
             )
             id
         }
     }
+
+
 
     suspend fun delete(id: Long) = dao.deleteById(id)
 

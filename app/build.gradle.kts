@@ -114,6 +114,6 @@ dependencies {
     implementation("io.coil-kt:coil-compose:2.7.0")
     implementation("androidx.compose.material3:material3:1.4.0")
     implementation(platform("androidx.compose:compose-bom:2025.01.00")) // contoh, pakai yang sesuai proyekmu
-    implementation("androidx.compose.material3:material3")
+    implementation("androidx.compose.material3:material3") 
 
 }

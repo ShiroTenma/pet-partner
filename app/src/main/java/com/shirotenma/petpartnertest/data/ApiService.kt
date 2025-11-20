@@ -1,48 +1,52 @@
-// app/src/main/java/com/shirotenma/petpartnertest/data/ApiService.kt
 package com.shirotenma.petpartnertest.data
 
-import com.squareup.moshi.JsonClass
 import retrofit2.http.Body
 import retrofit2.http.POST
 
-interface ApiService {
-    @POST("auth/login")
-    suspend fun login(@Body req: LoginReq): LoginResp
-
-    @POST("auth/register")
-    suspend fun register(@Body req: RegisterReq): LoginResp
-
-    @POST("diagnose")
-    suspend fun diagnose(@Body req: DiagnoseReq): DiagnoseResp
-
-    @POST("chat")
-    suspend fun chat(@Body text: String): ChatResp
-}
-
-@JsonClass(generateAdapter = true)
-data class LoginReq(val email: String, val password: String)
-
-@JsonClass(generateAdapter = true)
-data class RegisterReq(val name: String, val email: String, val password: String)
-
-@JsonClass(generateAdapter = true)
-data class LoginResp(val token: String, val user: UserDto)
-
-@JsonClass(generateAdapter = true)
-data class UserDto(val id: String, val name: String, val email: String)
-
-
-@JsonClass(generateAdapter = true)
-data class DiagnoseReq(val petId: Long, val imageBase64: String?)
-
-@JsonClass(generateAdapter = true)
-data class DiagnoseResp(
-    val condition: String,
-    val severity: String,     // Low|Moderate|High
-    val confidence: Double,   // 0..1
-    val tips: List<String>,   // saran
-    val bbox: List<Int>? = null // [x,y,w,h] opsional
+// ==== AUTH ==== //
+data class LoginReq(
+    val email: String,
+    val password: String
 )
 
-@JsonClass(generateAdapter = true)
-data class ChatResp(val text: String)
+data class RegisterReq(
+    val name: String,
+    val email: String,
+    val password: String
+)
+
+data class AuthUserDto(
+    val id: String,
+    val name: String,
+    val email: String
+)
+
+data class AuthRes(
+    val token: String,
+    val user: AuthUserDto
+)
+
+// ==== DIAGNOSE ==== //
+data class DiagnoseReq(
+    val petId: Long,
+    val photoUri: String
+)
+
+data class DiagnoseRes(
+    val condition: String,
+    val severity: String,
+    val confidence: Double,
+    val tips: List<String>
+)
+
+interface ApiService {
+
+    @POST("auth/login")
+    suspend fun login(@Body req: LoginReq): AuthRes
+
+    @POST("auth/register")
+    suspend fun register(@Body req: RegisterReq): AuthRes
+
+    @POST("diagnose")
+    suspend fun diagnose(@Body req: DiagnoseReq): DiagnoseRes
+}

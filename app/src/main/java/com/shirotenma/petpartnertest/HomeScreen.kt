@@ -35,9 +35,11 @@ fun HomeScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Button(onClick = { nav.navigate(Route.PETS) }) { Text("Open Pets") }
-            OutlinedButton(onClick = { vm.logout() }) { Text("Logout") }
+// Di dalam Column konten Home:
+            Button(onClick = { nav.navigate(Route.PETS) }) { Text("Manage Pets") }
+            Button(onClick = { nav.navigate(Route.PETS) }) { Text("Scan Now (choose pet)") }
             Button(onClick = { nav.navigate(Route.CHAT) }) { Text("Open Chatbot") }
+            OutlinedButton(onClick = { vm.logout() }) { Text("Logout") }
 
         }
     }

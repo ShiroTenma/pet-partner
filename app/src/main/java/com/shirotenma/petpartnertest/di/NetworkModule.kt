@@ -145,4 +145,10 @@ object NetworkModule {
     @Provides
     @Singleton
     fun api(retrofit: Retrofit): ApiService = retrofit.create(ApiService::class.java)
+
+    @Provides
+    @Singleton
+    fun diagnoseApi(retrofit: Retrofit): com.shirotenma.petpartnertest.diagnose.net.DiagnoseApi =
+        retrofit.create(com.shirotenma.petpartnertest.diagnose.net.DiagnoseApi::class.java)
+
 }
