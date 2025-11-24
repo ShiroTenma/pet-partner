@@ -22,6 +22,9 @@ object Route {
     const val DIAG_RESULT = "diag_result"
     const val CHAT = "chat"
     const val DIAG_HISTORY = "diag_history"
+    const val JOURNALS = "journals"
+    const val JOURNAL_EDIT = "journal_edit"
+    const val BIRD_MESSAGES = "bird_messages"
 }
 
 @Composable
@@ -113,6 +116,13 @@ fun AppNavHost(nav: NavHostController, ownerName: String) {
             com.shirotenma.petpartnertest.pet.record.PetRecordListScreen(nav = nav, petId = petId)
         }
 
+        composable("${Route.JOURNALS}/{petId}",
+            arguments = listOf(navArgument("petId"){ type = NavType.LongType })
+        ) { backStack ->
+            val petId = backStack.arguments!!.getLong("petId")
+            com.shirotenma.petpartnertest.journal.JournalListScreen(nav = nav, petId = petId)
+        }
+
 // Add record
         composable(
             route = "${Route.RECORD_EDIT}/{petId}",
@@ -124,6 +134,14 @@ fun AppNavHost(nav: NavHostController, ownerName: String) {
                 petId = petId,
                 id = null       // ⬅️ dulu: recordId = null
             )
+        }
+
+        composable(
+            route = "${Route.JOURNAL_EDIT}/{petId}",
+            arguments = listOf(navArgument("petId"){ type = NavType.LongType })
+        ) { backStack ->
+            val petId = backStack.arguments!!.getLong("petId")
+            com.shirotenma.petpartnertest.journal.JournalEditScreen(nav = nav, petId = petId, journalId = null)
         }
 
 // Edit record
@@ -142,6 +160,19 @@ fun AppNavHost(nav: NavHostController, ownerName: String) {
                 id = recordId    // ⬅️ map ke parameter 'id'
             )
         }
+
+        composable(
+            route = "${Route.JOURNAL_EDIT}/{petId}/{journalId}",
+            arguments = listOf(
+                navArgument("petId"){ type = NavType.LongType },
+                navArgument("journalId"){ type = NavType.LongType },
+            )
+        ) { backStack ->
+            val petId = backStack.arguments!!.getLong("petId")
+            val journalId = backStack.arguments!!.getLong("journalId")
+            com.shirotenma.petpartnertest.journal.JournalEditScreen(nav = nav, petId = petId, journalId = journalId)
+        }
+
 
         composable("${Route.SCAN}/{petId}",
             arguments = listOf(navArgument("petId"){ type = NavType.LongType })
@@ -213,6 +244,9 @@ fun AppNavHost(nav: NavHostController, ownerName: String) {
         ){ back ->
             val petId = back.arguments!!.getLong("petId")
             com.shirotenma.petpartnertest.diagnose.DiagnosisHistoryScreen(nav = nav, petId = petId)
+        }
+        composable(Route.BIRD_MESSAGES) {
+            com.shirotenma.petpartnertest.journal.BirdMessageScreen(nav = nav)
         }
     }
 }
