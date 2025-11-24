@@ -1,19 +1,17 @@
 package com.shirotenma.petpartnertest.journal
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
@@ -23,31 +21,25 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import kotlinx.coroutines.launch
 
-private data class BirdMessageUi(
-    val id: Long,
-    val title: String,
-    val preview: String
-)
-
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun BirdMessageScreen(nav: NavController) {
-    val messages = remember {
-        mutableStateOf(
-            listOf(
-                BirdMessageUi(1, "Worried owner", "My cat has been sneezing for two days..."),
-                BirdMessageUi(2, "Puppy advice", "First time grooming, any tips to calm him?")
-            )
-        )
-    }
-    val selected = remember { mutableStateOf<BirdMessageUi?>(null) }
+fun BirdMessageScreen(
+    nav: NavController,
+    vm: BirdMessageViewModel = hiltViewModel()
+) {
+    val state by vm.state.collectAsState()
+    val selected = remember { mutableStateOf<BirdMessage?>(null) }
     val replyText = remember { mutableStateOf("") }
     val snackbar = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
@@ -65,59 +57,76 @@ fun BirdMessageScreen(nav: NavController) {
         },
         snackbarHost = { SnackbarHost(snackbar) }
     ) { pad ->
-        if (messages.value.isEmpty()) {
-            Column(
+        Column(
+            modifier = Modifier
+                .padding(pad)
+                .fillMaxSize(),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Button(
+                onClick = {
+                    selected.value = null
+                    replyText.value = ""
+                    vm.loadRandom()
+                },
                 modifier = Modifier
-                    .padding(pad)
-                    .fillMaxSize()
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.Center
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
             ) {
-                Text("Belum ada Pesan Burung untuk dibalas.")
-                Text("Tarik untuk refresh atau coba lagi nanti.")
+                Text("From another forest")
             }
-        } else {
-            Column(
-                modifier = Modifier
-                    .padding(pad)
-                    .fillMaxSize()
-            ) {
-                LazyColumn(
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxWidth(),
-                    contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    items(messages.value) { message ->
-                        Card(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable {
-                                    selected.value = message
-                                    replyText.value = ""
-                                },
-                            colors = CardDefaults.cardColors()
-                        ) {
-                            Column(modifier = Modifier.padding(16.dp)) {
-                                Text(message.title)
+
+            when {
+                state.loading -> {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize(),
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        CircularProgressIndicator(modifier = Modifier.padding(16.dp))
+                    }
+                }
+
+                state.message == null -> {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(16.dp),
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Text(state.error ?: "Belum ada Pesan Burung untuk dibalas.")
+                    }
+                }
+
+                else -> {
+                    val msg = state.message!!
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp),
+                        colors = CardDefaults.cardColors()
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Text(msg.title)
+                            Text(
+                                msg.preview,
+                                modifier = Modifier.padding(top = 4.dp)
+                            )
+                            msg.lastReply?.let {
                                 Text(
-                                    message.preview,
-                                    modifier = Modifier.padding(top = 4.dp)
+                                    "Balasan terakhir: $it",
+                                    modifier = Modifier.padding(top = 8.dp)
                                 )
                             }
                         }
                     }
-                }
 
-                selected.value?.let { chosen ->
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(16.dp),
+                            .padding(horizontal = 16.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Text("Balas: ${chosen.title}")
                         OutlinedTextField(
                             value = replyText.value,
                             onValueChange = { replyText.value = it },
@@ -127,11 +136,17 @@ fun BirdMessageScreen(nav: NavController) {
                         )
                         Button(
                             onClick = {
-                                // TODO: call reply endpoint
-                                scope.launch {
-                                    snackbar.showSnackbar("Balasan dikirim (stub)")
-                                }
-                                selected.value = null
+                                vm.reply(
+                                    msg.id,
+                                    replyText.value,
+                                    onDone = {
+                                        scope.launch { snackbar.showSnackbar("Balasan dikirim") }
+                                        replyText.value = ""
+                                    },
+                                    onError = { err ->
+                                        scope.launch { snackbar.showSnackbar(err.message ?: "Gagal mengirim") }
+                                    }
+                                )
                             },
                             modifier = Modifier.fillMaxWidth()
                         ) {

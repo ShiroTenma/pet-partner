@@ -3,6 +3,8 @@ package com.shirotenma.petpartnertest.di
 
 import com.shirotenma.petpartnertest.AuthRepository
 import com.shirotenma.petpartnertest.data.AuthRepositoryImpl
+import com.shirotenma.petpartnertest.journal.JournalRepository
+import com.shirotenma.petpartnertest.journal.JournalRepositoryImpl
 import com.shirotenma.petpartnertest.pet.PetRepository
 import com.shirotenma.petpartnertest.pet.PetRepositoryImpl
 import dagger.Binds
@@ -22,4 +24,8 @@ abstract class RepoModule {
     @Binds
     @Singleton
     abstract fun bindPetRepository(impl: PetRepositoryImpl): PetRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindJournalRepository(impl: JournalRepositoryImpl): JournalRepository
 }

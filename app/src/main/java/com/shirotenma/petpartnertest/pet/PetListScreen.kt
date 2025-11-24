@@ -8,6 +8,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Assignment
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Chat
+import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
@@ -122,6 +123,10 @@ fun PetListScreen(
                                         IconButton(
                                             onClick = { nav.navigate("${Route.RECORDS}/${pet.id}") }
                                         ) { Icon(Icons.Filled.Assignment, contentDescription = "Records") }
+
+                                        IconButton(
+                                            onClick = { nav.navigate("${Route.JOURNALS}/${pet.id}") }
+                                        ) { Icon(Icons.Filled.Description, contentDescription = "Journals") }
 
                                         IconButton(
                                             onClick = { nav.navigate("${Route.SCAN}/${pet.id}") }
