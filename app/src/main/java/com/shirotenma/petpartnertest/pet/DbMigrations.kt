@@ -27,3 +27,38 @@ val MIGRATION_2_3 = object : Migration(2, 3) {
         db.execSQL("ALTER TABLE pet_records ADD COLUMN attachmentUri TEXT")
     }
 }
+
+// v4 -> v5 : tambah tabel journals dan bird_messages
+val MIGRATION_4_5 = object : Migration(4, 5) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            """
+            CREATE TABLE IF NOT EXISTS journals (
+                id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                petId INTEGER NOT NULL,
+                mood TEXT NOT NULL,
+                content TEXT NOT NULL,
+                date TEXT NOT NULL,
+                FOREIGN KEY(petId) REFERENCES pets(id) ON DELETE CASCADE
+            )
+            """.trimIndent()
+        )
+        db.execSQL("CREATE INDEX IF NOT EXISTS index_journals_petId ON journals(petId)")
+
+        db.execSQL(
+            """
+            CREATE TABLE IF NOT EXISTS bird_messages (
+                id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                title TEXT NOT NULL,
+                preview TEXT NOT NULL,
+                sourceJournalId INTEGER,
+                lastReply TEXT,
+                fromSelf INTEGER NOT NULL DEFAULT 0,
+                FOREIGN KEY(sourceJournalId) REFERENCES journals(id) ON DELETE SET NULL
+            )
+            """.trimIndent()
+        )
+        db.execSQL("CREATE INDEX IF NOT EXISTS index_bird_messages_sourceJournalId ON bird_messages(sourceJournalId)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS index_bird_messages_fromSelf ON bird_messages(fromSelf)")
+    }
+}

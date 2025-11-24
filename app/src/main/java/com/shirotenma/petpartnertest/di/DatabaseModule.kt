@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Room
 import com.shirotenma.petpartnertest.pet.MIGRATION_1_2
 import com.shirotenma.petpartnertest.pet.MIGRATION_2_3
+import com.shirotenma.petpartnertest.pet.MIGRATION_4_5
 import com.shirotenma.petpartnertest.pet.PetDao
 import com.shirotenma.petpartnertest.pet.PetDatabase
 import com.shirotenma.petpartnertest.pet.record.PetRecordDao
@@ -21,7 +22,7 @@ object DatabaseModule {
     @Provides @Singleton
     fun db(@ApplicationContext ctx: Context): PetDatabase =
         Room.databaseBuilder(ctx, PetDatabase::class.java, "pet_partner.db")
-            .addMigrations(MIGRATION_1_2, MIGRATION_2_3) // urut!
+            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_4_5) // urut!
             // .fallbackToDestructiveMigration() // JANGAN aktifkan kalau ingin jaga data
             .build()
 
@@ -31,6 +32,10 @@ object DatabaseModule {
 
     @Provides
     fun diagnosisDao(db: PetDatabase): com.shirotenma.petpartnertest.diagnose.db.DiagnosisDao = db.diagnosisDao()
+
+    @Provides fun journalDao(db: PetDatabase): com.shirotenma.petpartnertest.journal.db.JournalDao = db.journalDao()
+
+    @Provides fun birdMessageDao(db: PetDatabase): com.shirotenma.petpartnertest.journal.db.BirdMessageDao = db.birdMessageDao()
 
 
 }

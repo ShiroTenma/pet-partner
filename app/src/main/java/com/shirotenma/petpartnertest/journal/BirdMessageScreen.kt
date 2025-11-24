@@ -39,7 +39,6 @@ fun BirdMessageScreen(
     vm: BirdMessageViewModel = hiltViewModel()
 ) {
     val state by vm.state.collectAsState()
-    val selected = remember { mutableStateOf<BirdMessage?>(null) }
     val replyText = remember { mutableStateOf("") }
     val snackbar = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
@@ -65,7 +64,6 @@ fun BirdMessageScreen(
         ) {
             Button(
                 onClick = {
-                    selected.value = null
                     replyText.value = ""
                     vm.loadRandom()
                 },
