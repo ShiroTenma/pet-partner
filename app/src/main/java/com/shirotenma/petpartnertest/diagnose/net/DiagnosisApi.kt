@@ -23,6 +23,6 @@ interface DiagnosisApi {
     @POST("api/diagnosis")
     suspend fun diagnose(
         @Part image: MultipartBody.Part,
-        @Part meta: RequestBody
+        @Part("meta") meta: RequestBody
     ): DiagnosisDto
 }

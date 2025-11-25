@@ -37,8 +37,9 @@ class DiagnosisViewModel @Inject constructor(
         val info = DiseaseKnowledgeBase.items[result.detailClass ?: result.globalClass]
         val supported = result.isSupportedAnimal
         DiagnosisResponse(
-            condition = result.detailClass ?: result.globalClass.ifBlank { "Unknown" },
+            condition = if (supported) result.detailClass ?: result.globalClass.ifBlank { "Unknown" } else "Unknown (unsupported image)",
             severity = when {
+                !supported -> "unknown"
                 result.globalClass.contains("healthy", ignoreCase = true) -> "healthy"
                 result.globalClass.isBlank() -> "unknown"
                 else -> "skin_issue"

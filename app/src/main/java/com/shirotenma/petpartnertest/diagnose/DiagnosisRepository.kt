@@ -41,13 +41,18 @@ class DiagnosisRepository @Inject constructor(
         val part = uriToMultipart(photoUri)
         val meta: RequestBody = metaJson.toRequestBody("application/json".toMediaType())
         val dto: DiagnosisDto = api.diagnose(part, meta)
+        val globalConfVal = dto.global_conf ?: 0.0
+        val threshold = dto.unknown_threshold ?: 0.6
+        val supported = (dto.is_supported_animal == true) &&
+                !dto.species.isNullOrBlank() &&
+                globalConfVal >= threshold
         return DiagnosisResult(
             species = dto.species ?: "",
             globalClass = dto.global_class ?: "",
-            globalConf = dto.global_conf ?: 0.0,
+            globalConf = globalConfVal,
             detailClass = dto.detail_class,
             detailConf = dto.detail_conf,
-            isSupportedAnimal = dto.is_supported_animal ?: (dto.species != null)
+            isSupportedAnimal = supported
         )
     }
 
