@@ -27,6 +27,11 @@ class ChatViewModel @Inject constructor(
         context = ctx
         if (_messages.value.isEmpty()) {
             addBot(engine.introMessage(ctx))
+            // Pesan pembuka tambahan: reminder batasan dan contoh pertanyaan
+            addBot(
+                "Catatan: hasil AI bukan diagnosis pasti, hindari obat/dosis sendiri, dan tetap konsultasi vet jika ragu. " +
+                        "Contoh pertanyaan: \"gejala apa?\", \"perawatan rumahan?\", \"ringkas hasilnya?\", \"perlu ke dokter?\""
+            )
         }
     }
 

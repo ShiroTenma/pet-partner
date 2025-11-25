@@ -49,7 +49,9 @@ fun ChatScreen(
         val ctx = ChatContext(
             species = cond?.substringBefore("_")?.takeIf { it == "cat" || it == "dog" },
             diseaseCode = cond,
-            diseaseConfidence = confidence?.toFloat()
+            diseaseConfidence = confidence?.toFloat(),
+            severity = sev,
+            tips = tips
         )
         vm.setContext(ctx)
     }

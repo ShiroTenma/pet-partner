@@ -3,6 +3,7 @@ package com.shirotenma.petpartnertest.diagnose
 import android.content.Context
 import android.net.Uri
 import androidx.lifecycle.ViewModel
+import com.shirotenma.petpartnertest.chatbot.DiseaseKnowledgeBase
 import com.shirotenma.petpartnertest.pet.record.PetRecordRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -32,11 +33,12 @@ class DiagnosisViewModel @Inject constructor(
     ): DiagnosisResponse = withContext(Dispatchers.IO) {
         val uri = Uri.parse(photoUri)
         val result = repo.diagnose(uri)
+        val info = DiseaseKnowledgeBase.items[result.detailClass ?: result.globalClass]
         DiagnosisResponse(
             condition = result.detailClass ?: result.globalClass,
             severity = if (result.globalClass.contains("healthy", ignoreCase = true)) "healthy" else "skin_issue",
             confidence = result.detailConf ?: result.globalConf,
-            tips = result.tips,
+            tips = info?.homeCareTips ?: emptyList(),
             species = result.species,
             globalClass = result.globalClass,
             detailClass = result.detailClass

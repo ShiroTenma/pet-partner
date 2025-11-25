@@ -13,7 +13,9 @@ data class DiseaseInfo(
 data class ChatContext(
     val species: String? = null,
     val diseaseCode: String? = null,
-    val diseaseConfidence: Float? = null
+    val diseaseConfidence: Float? = null,
+    val severity: String? = null,
+    val tips: List<String> = emptyList()
 )
 
 data class ChatMessage(
