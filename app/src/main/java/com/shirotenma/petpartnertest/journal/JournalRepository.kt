@@ -14,6 +14,7 @@ interface JournalRepository {
     suspend fun get(id: Long): JournalEntry?
     suspend fun upsert(entry: JournalEntry): Long
     suspend fun delete(id: Long)
+    suspend fun delete(entity: JournalEntry) = delete(entity.id)
 
     fun observeBirdMessages(): Flow<List<BirdMessage>>
     suspend fun shareAsBirdMessage(journalId: Long?, title: String, preview: String): Long

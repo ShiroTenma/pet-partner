@@ -12,6 +12,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -23,15 +24,20 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.SwipeToDismissBoxValue
+import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.shirotenma.petpartnertest.Route
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -42,6 +48,7 @@ fun JournalListScreen(
 ) {
     LaunchedEffect(petId) { vm.observe(petId) }
     val state by vm.state.collectAsState()
+    val scope = rememberCoroutineScope()
 
     Scaffold(
         topBar = {
@@ -96,24 +103,45 @@ fun JournalListScreen(
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     items(state.items, key = { it.id }) { journal ->
-                        Card(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable {
-                                    nav.navigate("${Route.JOURNAL_EDIT}/$petId/${journal.id}")
-                                },
-                            colors = CardDefaults.cardColors()
-                        ) {
-                            Column(modifier = Modifier.padding(16.dp)) {
-                                Text(journal.date, style = MaterialTheme.typography.labelMedium)
-                                Text(journal.mood, style = MaterialTheme.typography.titleMedium)
-                                Text(
-                                    journal.content,
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    modifier = Modifier.padding(top = 4.dp)
-                                )
+                        val dismissState = rememberSwipeToDismissBoxState(
+                            confirmValueChange = { value ->
+                                if (value == SwipeToDismissBoxValue.EndToStart) {
+                                    scope.launch { vm.delete(journal.id) }
+                                    true
+                                } else false
                             }
-                        }
+                        )
+                        SwipeToDismissBox(
+                            state = dismissState,
+                            enableDismissFromStartToEnd = false,
+                            enableDismissFromEndToStart = true,
+                            backgroundContent = {},
+                            content = {
+                                Card(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable {
+                                            nav.navigate("${Route.JOURNAL_EDIT}/$petId/${journal.id}")
+                                        },
+                                    colors = CardDefaults.cardColors()
+                                ) {
+                                    Column(modifier = Modifier.padding(16.dp)) {
+                                        Text(journal.date, style = MaterialTheme.typography.labelMedium)
+                                        Text(journal.mood, style = MaterialTheme.typography.titleMedium)
+                                        Text(
+                                            journal.content,
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            modifier = Modifier.padding(top = 4.dp)
+                                        )
+                                        IconButton(
+                                            onClick = { scope.launch { vm.delete(journal.id) } }
+                                        ) {
+                                            Icon(Icons.Filled.Delete, contentDescription = "Delete")
+                                        }
+                                    }
+                                }
+                            }
+                        )
                     }
                 }
             }

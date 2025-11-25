@@ -1,9 +1,8 @@
 package com.shirotenma.petpartnertest.diagnose
 
 import android.content.Context
+import android.net.Uri
 import androidx.lifecycle.ViewModel
-import com.shirotenma.petpartnertest.data.ApiService
-import com.shirotenma.petpartnertest.data.DiagnoseReq
 import com.shirotenma.petpartnertest.pet.record.PetRecordRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -14,12 +13,15 @@ data class DiagnosisResponse(
     val condition: String,
     val severity: String,
     val confidence: Double,
-    val tips: List<String>
+    val tips: List<String>,
+    val species: String,
+    val globalClass: String,
+    val detailClass: String?
 )
 
 @HiltViewModel
 class DiagnosisViewModel @Inject constructor(
-    private val api: ApiService,
+    private val repo: DiagnosisRepository,
     private val recordRepo: PetRecordRepository
 ) : ViewModel() {
 
@@ -28,20 +30,16 @@ class DiagnosisViewModel @Inject constructor(
         petId: Long,
         photoUri: String
     ): DiagnosisResponse = withContext(Dispatchers.IO) {
-
-        // ✅ sekarang kirim req dengan parameter yang diminta
-        val resp = api.diagnose(
-            DiagnoseReq(
-                petId = petId,
-                photoUri = photoUri
-            )
-        )
-
+        val uri = Uri.parse(photoUri)
+        val result = repo.diagnose(uri)
         DiagnosisResponse(
-            condition = resp.condition,
-            severity = resp.severity,
-            confidence = resp.confidence,
-            tips = resp.tips
+            condition = result.detailClass ?: result.globalClass,
+            severity = if (result.globalClass.contains("healthy", ignoreCase = true)) "healthy" else "skin_issue",
+            confidence = result.detailConf ?: result.globalConf,
+            tips = result.tips,
+            species = result.species,
+            globalClass = result.globalClass,
+            detailClass = result.detailClass
         )
     }
 

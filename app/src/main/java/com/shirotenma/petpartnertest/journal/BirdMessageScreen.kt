@@ -42,6 +42,7 @@ fun BirdMessageScreen(
     val replyText = remember { mutableStateOf("") }
     val snackbar = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
+    androidx.compose.runtime.LaunchedEffect(Unit) { vm.loadRandom() }
 
     Scaffold(
         topBar = {
@@ -146,7 +147,8 @@ fun BirdMessageScreen(
                                     }
                                 )
                             },
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier.fillMaxWidth(),
+                            enabled = replyText.value.isNotBlank()
                         ) {
                             Text("Kirim")
                         }

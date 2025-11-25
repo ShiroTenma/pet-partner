@@ -4,6 +4,7 @@ package com.shirotenma.petpartnertest.di
 import com.shirotenma.petpartnertest.data.ApiService
 import com.shirotenma.petpartnertest.data.LoginReq
 import com.shirotenma.petpartnertest.data.RegisterReq
+import com.shirotenma.petpartnertest.diagnose.net.DiagnosisApi
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import dagger.Module
@@ -110,15 +111,27 @@ object NetworkModule {
                     return@addInterceptor respond(200, json)
                 }
 
-                // ---- Mock DIAGNOSE (contoh) ----
+                // ---- Mock DIAGNOSE lama (contoh) ----
                 if (method == "POST" && (path.endsWith("/diagnose") || path.contains("/diagnose"))) {
-                    // balasan dummy: condition, severity, confidence, tips
                     val json = """
                         {
                           "condition":"Possible dermatitis",
                           "severity":"mild",
                           "confidence":0.78,
                           "tips":["Keep area clean","Use vet-approved ointment","Monitor scratching behavior"]
+                        }
+                    """.trimIndent()
+                    return@addInterceptor respond(200, json)
+                }
+                // ---- Mock diagnosis baru (FastAPI) ----
+                if (method == "POST" && path.contains("/api/diagnosis")) {
+                    val json = """
+                        {
+                          "species":"cat",
+                          "global_class":"cat_skin_issue",
+                          "global_conf":0.91,
+                          "detail_class":"cat_Ringworm",
+                          "detail_conf":0.88
                         }
                     """.trimIndent()
                     return@addInterceptor respond(200, json)
@@ -148,7 +161,7 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    fun diagnoseApi(retrofit: Retrofit): com.shirotenma.petpartnertest.diagnose.net.DiagnoseApi =
-        retrofit.create(com.shirotenma.petpartnertest.diagnose.net.DiagnoseApi::class.java)
+    fun diagnosisApi(retrofit: Retrofit): DiagnosisApi =
+        retrofit.create(DiagnosisApi::class.java)
 
 }
