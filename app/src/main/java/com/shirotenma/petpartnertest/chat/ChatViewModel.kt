@@ -18,6 +18,15 @@ class ChatViewModel @Inject constructor(
     private val engine: ChatbotEngine
 ) : ViewModel() {
 
+    val quickActions: List<Pair<String, String>> = listOf(
+        "Gejala umum?" to "gejala apa saja",
+        "Perawatan aman" to "perawatan rumahan",
+        "Pencegahan" to "cara mencegah",
+        "Ringkas hasil" to "ringkas hasilnya",
+        "Perlu ke dokter?" to "perlu ke dokter hewan?",
+        "Cari klinik (Maps/WA)" to "hubungi klinik via whatsapp"
+    )
+
     private val _messages = MutableStateFlow<List<ChatMessage>>(emptyList())
     val messages: StateFlow<List<ChatMessage>> = _messages
 
@@ -48,5 +57,9 @@ class ChatViewModel @Inject constructor(
         addUser(userText)
         val reply = engine.reply(userText, context)
         addBot(reply.text)
+    }
+
+    fun quickAsk(text: String) {
+        sendMessage(text)
     }
 }

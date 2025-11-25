@@ -28,6 +28,28 @@ val MIGRATION_2_3 = object : Migration(2, 3) {
     }
 }
 
+// v3 -> v4 : tambah tabel diagnosis
+val MIGRATION_3_4 = object : Migration(3, 4) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            """
+            CREATE TABLE IF NOT EXISTS diagnosis (
+                id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                petId INTEGER NOT NULL,
+                condition TEXT NOT NULL,
+                severity TEXT NOT NULL,
+                confidence REAL NOT NULL,
+                tipsJoined TEXT NOT NULL,
+                photoUri TEXT,
+                createdAt INTEGER NOT NULL,
+                FOREIGN KEY(petId) REFERENCES pets(id) ON DELETE CASCADE
+            )
+            """.trimIndent()
+        )
+        db.execSQL("CREATE INDEX IF NOT EXISTS index_diagnosis_petId ON diagnosis(petId)")
+    }
+}
+
 // v4 -> v5 : tambah tabel journals dan bird_messages
 val MIGRATION_4_5 = object : Migration(4, 5) {
     override fun migrate(db: SupportSQLiteDatabase) {

@@ -15,7 +15,8 @@ data class ChatContext(
     val diseaseCode: String? = null,
     val diseaseConfidence: Float? = null,
     val severity: String? = null,
-    val tips: List<String> = emptyList()
+    val tips: List<String> = emptyList(),
+    val isSupportedAnimal: Boolean = true
 )
 
 data class ChatMessage(

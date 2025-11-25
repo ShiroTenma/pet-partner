@@ -5,9 +5,12 @@ import android.net.Uri
 import com.shirotenma.petpartnertest.diagnose.net.DiagnosisApi
 import com.shirotenma.petpartnertest.diagnose.net.DiagnosisDto
 import dagger.hilt.android.qualifiers.ApplicationContext
+import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
+import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.asRequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.File
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -17,7 +20,8 @@ data class DiagnosisResult(
     val globalClass: String,
     val globalConf: Double,
     val detailClass: String?,
-    val detailConf: Double?
+    val detailConf: Double?,
+    val isSupportedAnimal: Boolean
 ) {
     val condition: String = detailClass ?: globalClass
     val severity: String = if (globalClass.contains("healthy", ignoreCase = true)) "healthy" else "skin_issue"
@@ -31,16 +35,19 @@ class DiagnosisRepository @Inject constructor(
     @ApplicationContext private val appContext: Context
 ) {
     suspend fun diagnose(
-        photoUri: Uri
+        photoUri: Uri,
+        metaJson: String = "{}"
     ): DiagnosisResult {
         val part = uriToMultipart(photoUri)
-        val dto: DiagnosisDto = api.diagnose(part)
+        val meta: RequestBody = metaJson.toRequestBody("application/json".toMediaType())
+        val dto: DiagnosisDto = api.diagnose(part, meta)
         return DiagnosisResult(
-            species = dto.species,
-            globalClass = dto.global_class,
-            globalConf = dto.global_conf,
+            species = dto.species ?: "",
+            globalClass = dto.global_class ?: "",
+            globalConf = dto.global_conf ?: 0.0,
             detailClass = dto.detail_class,
-            detailConf = dto.detail_conf
+            detailConf = dto.detail_conf,
+            isSupportedAnimal = dto.is_supported_animal ?: (dto.species != null)
         )
     }
 

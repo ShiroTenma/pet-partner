@@ -25,7 +25,7 @@ object NetworkModule {
 
     @Provides
     @Named("baseUrl")
-    fun baseUrl(): String = "http://10.0.2.2:8000/"
+    fun baseUrl(): String = "http://192.168.100.134:8000/"
 
     @Provides
     @Singleton

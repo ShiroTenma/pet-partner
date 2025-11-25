@@ -12,6 +12,7 @@ class ChatbotEngine(
     fun introMessage(ctx: ChatContext): String {
         val base = "Hai! Aku asisten edukasi, bukan dokter. Hasil ini hanya skrining awal berbasis foto."
         return when {
+            ctx.isSupportedAnimal == false -> unsupportedAnimalMessage()
             ctx.diseaseCode != null -> {
                 val info = diseaseDb[ctx.diseaseCode]
                 val name = info?.name ?: ctx.diseaseCode
@@ -34,6 +35,10 @@ class ChatbotEngine(
         }
 
         val intent = detectIntent(text)
+
+        if (context.isSupportedAnimal == false) {
+            return ChatMessage(from = Sender.BOT, text = unsupportedAnimalMessage())
+        }
 
         val info = context.diseaseCode?.let { diseaseDb[it] }
         val hasDiag = info != null
@@ -76,6 +81,12 @@ class ChatbotEngine(
                 }
             }
             Intent.ASK_DOCTOR -> "Kalau gejala berat atau kamu ragu, sebaiknya buat janji dengan dokter hewan dalam 1–3 hari; jika gawat, segera ke klinik darurat. $disclaimerGeneral"
+            Intent.ASK_WHATSAPP -> buildString {
+                append("Aku tidak bisa menghubungi klinik/dokter langsung atau mengakses lokasimu. ")
+                append("Silakan buka Google Maps, cari \"klinik hewan terdekat\", lalu bagikan linknya via WhatsApp ke klinik/dokter yang kamu percaya. ")
+                append("Contoh pencarian: https://www.google.com/maps/search/klinik+hewan+terdekat. ")
+                append("Jika kondisi darurat, segera datang ke klinik/RS hewan terdekat. $disclaimerGeneral")
+            }
             Intent.ASK_UNSUPPORTED -> "Saat ini aku hanya fokus pada masalah kulit kucing dan anjing. Untuk spesies atau penyakit lain, silakan konsultasi langsung ke dokter hewan. $disclaimerGeneral"
             Intent.FALLBACK -> "Maaf, aku belum paham. Kamu bisa tanya: \"gejala apa?\", \"perawatan rumahan?\", \"perlu ke dokter?\", atau \"ringkas hasilnya\". $disclaimerGeneral"
         }
@@ -90,6 +101,10 @@ class ChatbotEngine(
         if (items.isEmpty()) "$title (data belum tersedia)"
         else title + "\n" + items.joinToString("\n") { "• $it" }
 
+    private fun unsupportedAnimalMessage(): String =
+        "Dari analisis gambar, sistem tidak yakin ini adalah foto kucing atau anjing. " +
+                "Coba kirim ulang foto yang jelas menunjukkan hewan peliharaanmu (kucing atau anjing), dan hindari foto benda lain atau hewan selain kucing/anjing ya 🐾"
+
     private fun detectIntent(text: String): Intent = when {
         listOf("kelinci", "hamster", "burung", "sapi", "organ", "paru", "pencernaan").any { text.contains(it) } -> Intent.ASK_UNSUPPORTED
         listOf("halo", "hai", "pagi", "malam", "hi").any { text.contains(it) } -> Intent.GREETING
@@ -99,6 +114,7 @@ class ChatbotEngine(
         listOf("harus gimana", "obat", "rawat", "perawatan", "apa yang harus", "gimana").any { text.contains(it) } -> Intent.ASK_TREATMENT
         listOf("mencegah", "cegah", "supaya tidak").any { text.contains(it) } -> Intent.ASK_PREVENTION
         listOf("dokter", "urgent", "gawat", "bahaya", "segera").any { text.contains(it) } -> Intent.ASK_URGENCY
+        listOf("whatsapp", "wa ", " wa", "hubungi klinik", "kontak klinik", "nomor klinik", "hubungi dokter").any { text.contains(it) } -> Intent.ASK_WHATSAPP
         listOf("ringkas", "singkat", "summary", "ulang").any { text.contains(it) } -> Intent.ASK_SUMMARY
         listOf("ke dokter", "kapan ke vet", "perlu vet").any { text.contains(it) } -> Intent.ASK_DOCTOR
         else -> Intent.FALLBACK
@@ -106,5 +122,5 @@ class ChatbotEngine(
 }
 
 private enum class Intent {
-    GREETING, ASK_FEATURE, ASK_RESULT_EXPLANATION, ASK_SYMPTOM, ASK_TREATMENT, ASK_PREVENTION, ASK_URGENCY, ASK_SUMMARY, ASK_DOCTOR, ASK_UNSUPPORTED, FALLBACK
+    GREETING, ASK_FEATURE, ASK_RESULT_EXPLANATION, ASK_SYMPTOM, ASK_TREATMENT, ASK_PREVENTION, ASK_URGENCY, ASK_SUMMARY, ASK_DOCTOR, ASK_WHATSAPP, ASK_UNSUPPORTED, FALLBACK
 }

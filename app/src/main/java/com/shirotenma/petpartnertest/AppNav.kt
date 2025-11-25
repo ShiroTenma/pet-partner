@@ -211,7 +211,7 @@ fun AppNavHost(nav: NavHostController, ownerName: String) {
         }
 
         composable(
-            route = "${Route.CHAT}?petId={petId}&cond={cond}&sev={sev}&conf={conf}&tips={tips}&uri={uri}",
+            route = "${Route.CHAT}?petId={petId}&cond={cond}&sev={sev}&conf={conf}&tips={tips}&uri={uri}&supported={supported}",
             arguments = listOf(
                 navArgument("petId"){ type = NavType.LongType; defaultValue = -1L },
                 navArgument("cond"){ type = NavType.StringType; nullable = true },
@@ -219,6 +219,7 @@ fun AppNavHost(nav: NavHostController, ownerName: String) {
                 navArgument("conf"){ type = NavType.StringType; nullable = true },
                 navArgument("tips"){ type = NavType.StringType; nullable = true },
                 navArgument("uri"){ type = NavType.StringType; nullable = true },
+                navArgument("supported"){ type = NavType.BoolType; defaultValue = true }
             )
         )
 
@@ -229,6 +230,7 @@ fun AppNavHost(nav: NavHostController, ownerName: String) {
             val confStr = back.arguments?.getString("conf")
             val tipsStr = back.arguments?.getString("tips")
             val uriStr  = back.arguments?.getString("uri")
+            val supported = back.arguments?.getBoolean("supported") ?: true
 
             com.shirotenma.petpartnertest.chat.ChatScreen(
                 nav = nav,
@@ -236,7 +238,8 @@ fun AppNavHost(nav: NavHostController, ownerName: String) {
                 cond = cond, sev = sev,
                 confidence = confStr?.toDoubleOrNull(),
                 tips = tipsStr?.split("|;|")?.filter { it.isNotBlank() } ?: emptyList(),
-                photoUri = uriStr
+                photoUri = uriStr,
+                supported = supported
             )
         }
         composable("diag_history/{petId}",

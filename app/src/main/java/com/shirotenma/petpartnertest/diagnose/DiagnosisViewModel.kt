@@ -15,9 +15,10 @@ data class DiagnosisResponse(
     val severity: String,
     val confidence: Double,
     val tips: List<String>,
-    val species: String,
-    val globalClass: String,
-    val detailClass: String?
+    val species: String?,
+    val globalClass: String?,
+    val detailClass: String?,
+    val isSupported: Boolean
 )
 
 @HiltViewModel
@@ -34,14 +35,20 @@ class DiagnosisViewModel @Inject constructor(
         val uri = Uri.parse(photoUri)
         val result = repo.diagnose(uri)
         val info = DiseaseKnowledgeBase.items[result.detailClass ?: result.globalClass]
+        val supported = result.isSupportedAnimal
         DiagnosisResponse(
-            condition = result.detailClass ?: result.globalClass,
-            severity = if (result.globalClass.contains("healthy", ignoreCase = true)) "healthy" else "skin_issue",
+            condition = result.detailClass ?: result.globalClass.ifBlank { "Unknown" },
+            severity = when {
+                result.globalClass.contains("healthy", ignoreCase = true) -> "healthy"
+                result.globalClass.isBlank() -> "unknown"
+                else -> "skin_issue"
+            },
             confidence = result.detailConf ?: result.globalConf,
-            tips = info?.homeCareTips ?: emptyList(),
-            species = result.species,
-            globalClass = result.globalClass,
-            detailClass = result.detailClass
+            tips = if (supported) info?.homeCareTips ?: emptyList() else emptyList(),
+            species = result.species.ifBlank { null },
+            globalClass = result.globalClass.ifBlank { null },
+            detailClass = result.detailClass,
+            isSupported = supported
         )
     }
 
