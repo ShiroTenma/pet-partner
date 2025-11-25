@@ -84,3 +84,31 @@ val MIGRATION_4_5 = object : Migration(4, 5) {
         db.execSQL("CREATE INDEX IF NOT EXISTS index_bird_messages_fromSelf ON bird_messages(fromSelf)")
     }
 }
+
+// v5 -> v6 : tambah tabel schedules
+val MIGRATION_5_6 = object : Migration(5, 6) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            """
+            CREATE TABLE IF NOT EXISTS schedules (
+                id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                petId INTEGER NOT NULL,
+                title TEXT NOT NULL,
+                type TEXT NOT NULL,
+                date TEXT NOT NULL,
+                time TEXT NOT NULL,
+                notes TEXT,
+                FOREIGN KEY(petId) REFERENCES pets(id) ON DELETE CASCADE
+            )
+            """.trimIndent()
+        )
+        db.execSQL("CREATE INDEX IF NOT EXISTS index_schedules_petId ON schedules(petId)")
+    }
+}
+
+// v6 -> v7 : tambah kolom remind ke schedules
+val MIGRATION_6_7 = object : Migration(6, 7) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE schedules ADD COLUMN remind INTEGER NOT NULL DEFAULT 0")
+    }
+}

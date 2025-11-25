@@ -25,6 +25,8 @@ object Route {
     const val JOURNALS = "journals"
     const val JOURNAL_EDIT = "journal_edit"
     const val BIRD_MESSAGES = "bird_messages"
+    const val SCHEDULES = "schedules"
+    const val SCHEDULE_EDIT = "schedule_edit"
 }
 
 @Composable
@@ -182,7 +184,7 @@ fun AppNavHost(nav: NavHostController, ownerName: String) {
         }
 
         composable(
-            route = "${Route.DIAG_RESULT}?petId={petId}&cond={cond}&sev={sev}&conf={conf}&tips={tips}&uri={uri}",
+            route = "${Route.DIAG_RESULT}?petId={petId}&cond={cond}&sev={sev}&conf={conf}&tips={tips}&uri={uri}&supported={supported}&note={note}",
             arguments = listOf(
                 navArgument("petId"){ type = NavType.LongType },
                 navArgument("cond"){ type = NavType.StringType },
@@ -190,6 +192,8 @@ fun AppNavHost(nav: NavHostController, ownerName: String) {
                 navArgument("conf"){ type = NavType.StringType },
                 navArgument("tips"){ type = NavType.StringType },
                 navArgument("uri"){ type = NavType.StringType },
+                navArgument("supported"){ type = NavType.BoolType; defaultValue = true },
+                navArgument("note"){ type = NavType.StringType; defaultValue = "" }
             )
         ) { back ->
             val petId   = back.arguments!!.getLong("petId")
@@ -198,6 +202,8 @@ fun AppNavHost(nav: NavHostController, ownerName: String) {
             val confStr = back.arguments!!.getString("conf")!!
             val tipsStr = back.arguments!!.getString("tips")!!
             val uriStr  = back.arguments!!.getString("uri")!!
+            val supported = back.arguments!!.getBoolean("supported")
+            val note = back.arguments!!.getString("note").orEmpty().ifBlank { null }
 
             com.shirotenma.petpartnertest.diagnose.DiagnoseResultScreen(
                 nav = nav,
@@ -206,7 +212,9 @@ fun AppNavHost(nav: NavHostController, ownerName: String) {
                 severity = sev,
                 confidence = confStr.toDoubleOrNull() ?: 0.0,
                 tips = tipsStr.split("|;|").filter { it.isNotBlank() },
-                photoUri = uriStr
+                photoUri = uriStr,
+                isSupported = supported,
+                note = note
             )
         }
 
@@ -250,6 +258,28 @@ fun AppNavHost(nav: NavHostController, ownerName: String) {
         }
         composable(Route.BIRD_MESSAGES) {
             com.shirotenma.petpartnertest.journal.BirdMessageScreen(nav = nav)
+        }
+        composable("${Route.SCHEDULES}/{petId}",
+            arguments = listOf(navArgument("petId"){ type = NavType.LongType })
+        ){ back ->
+            val petId = back.arguments!!.getLong("petId")
+            com.shirotenma.petpartnertest.schedule.ScheduleListScreen(nav = nav, petId = petId)
+        }
+        composable("${Route.SCHEDULE_EDIT}/{petId}",
+            arguments = listOf(navArgument("petId"){ type = NavType.LongType })
+        ){ back ->
+            val petId = back.arguments!!.getLong("petId")
+            com.shirotenma.petpartnertest.schedule.ScheduleEditScreen(nav = nav, petId = petId, scheduleId = null)
+        }
+        composable("${Route.SCHEDULE_EDIT}/{petId}/{scheduleId}",
+            arguments = listOf(
+                navArgument("petId"){ type = NavType.LongType },
+                navArgument("scheduleId"){ type = NavType.LongType },
+            )
+        ){ back ->
+            val petId = back.arguments!!.getLong("petId")
+            val scheduleId = back.arguments!!.getLong("scheduleId")
+            com.shirotenma.petpartnertest.schedule.ScheduleEditScreen(nav = nav, petId = petId, scheduleId = scheduleId)
         }
     }
 }

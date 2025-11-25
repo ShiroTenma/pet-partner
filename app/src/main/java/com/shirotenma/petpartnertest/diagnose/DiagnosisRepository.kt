@@ -21,7 +21,8 @@ data class DiagnosisResult(
     val globalConf: Double,
     val detailClass: String?,
     val detailConf: Double?,
-    val isSupportedAnimal: Boolean
+    val isSupportedAnimal: Boolean,
+    val note: String?
 ) {
     val condition: String = detailClass ?: globalClass
     val severity: String = if (globalClass.contains("healthy", ignoreCase = true)) "healthy" else "skin_issue"
@@ -36,10 +37,11 @@ class DiagnosisRepository @Inject constructor(
 ) {
     suspend fun diagnose(
         photoUri: Uri,
-        metaJson: String = "{}"
+        petId: Long? = null,
+        metaJson: String? = null
     ): DiagnosisResult {
         val part = uriToMultipart(photoUri)
-        val meta: RequestBody = metaJson.toRequestBody("application/json".toMediaType())
+        val meta: RequestBody = (metaJson ?: buildMeta(petId, photoUri)).toRequestBody("application/json".toMediaType())
         val dto: DiagnosisDto = api.diagnose(part, meta)
         val globalConfVal = dto.global_conf ?: 0.0
         val threshold = dto.unknown_threshold ?: 0.6
@@ -52,7 +54,8 @@ class DiagnosisRepository @Inject constructor(
             globalConf = globalConfVal,
             detailClass = dto.detail_class,
             detailConf = dto.detail_conf,
-            isSupportedAnimal = supported
+            isSupportedAnimal = supported,
+            note = dto.note
         )
     }
 
@@ -63,5 +66,20 @@ class DiagnosisRepository @Inject constructor(
         tempFile.outputStream().use { out -> input.copyTo(out) }
         val body = tempFile.asRequestBody("image/jpeg".toMediaTypeOrNull())
         return MultipartBody.Part.createFormData("image", tempFile.name, body)
+    }
+
+    private fun buildMeta(petId: Long?, uri: Uri): String {
+        val ts = System.currentTimeMillis()
+        val version = "unknown"
+        val pidStr = petId?.toString() ?: "null"
+        val photo = uri.toString().replace("\"", "\\\"")
+        return """
+            {
+              "petId": $pidStr,
+              "timestamp": $ts,
+              "appVersion": "$version",
+              "photoUri": "$photo"
+            }
+        """.trimIndent()
     }
 }

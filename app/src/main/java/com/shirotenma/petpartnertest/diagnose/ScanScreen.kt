@@ -83,7 +83,9 @@ fun ScanScreen(
                             "sev=${enc(resp.severity)}&" +
                             "conf=${resp.confidence}&" +
                             "tips=${enc(tipsPacked)}&" +
-                            "uri=${enc(uri.toString())}"
+                            "uri=${enc(uri.toString())}&" +
+                            "supported=${resp.isSupported}&" +
+                            "note=${enc(resp.note ?: "")}"
                 )
             }.onFailure {
                 error = it.message ?: "Diagnosis failed"

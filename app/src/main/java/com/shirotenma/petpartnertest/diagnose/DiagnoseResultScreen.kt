@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
@@ -43,6 +44,8 @@ fun DiagnoseResultScreen(
     confidence: Double,
     tips: List<String>,
     photoUri: String?,
+    isSupported: Boolean = true,
+    note: String? = null,
     vm: DiagnosisViewModel = hiltViewModel()
 ) {
     val scope = rememberCoroutineScope()
@@ -77,6 +80,16 @@ fun DiagnoseResultScreen(
                     Text(text = "Condition: $condition", style = MaterialTheme.typography.titleMedium)
                     Text(text = "Severity: $severity")
                     Text(text = "Confidence: ${(confidence * 100).toInt()}%")
+                    if (!isSupported) {
+                        Text(
+                            text = "Foto ini tidak terdeteksi kucing/anjing. Coba unggah foto yang lebih jelas.",
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
+                    note?.let {
+                        Text(it, style = MaterialTheme.typography.bodySmall)
+                    }
                 }
             }
 
@@ -89,12 +102,20 @@ fun DiagnoseResultScreen(
                 }
             }
 
+            if (isSupported) {
+                HorizontalDivider()
+                Button(
+                    onClick = { nav.navigate("${Route.SCAN}/$petId") },
+                    modifier = Modifier.fillMaxWidth()
+                ) { Text("Unggah foto lain") }
+            }
+
             Spacer(Modifier.weight(1f))
 
             // Aksi utama
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Button(
-                    enabled = !saving,
+                    enabled = !saving && isSupported,
                     onClick = {
                         saving = true
                         scope.launch {
@@ -116,7 +137,7 @@ fun DiagnoseResultScreen(
                             }
                         }
                     }
-                ) { Text(if (saving) "Saving…" else "Save to records") }
+                ) { Text(if (saving) "Saving…" else if (isSupported) "Save to records" else "Unsupported") }
 
                 OutlinedButton(
                     onClick = {
@@ -125,7 +146,8 @@ fun DiagnoseResultScreen(
                         nav.navigate(
                             "${Route.CHAT}?petId=$petId" +
                                     "&cond=${enc(condition)}&sev=${enc(severity)}" +
-                                    "&conf=${confidence}&tips=${enc(tipsStr)}&uri=${enc(photoUri ?: "")}"
+                                    "&conf=${confidence}&tips=${enc(tipsStr)}&uri=${enc(photoUri ?: "")}" +
+                                    "&supported=$isSupported"
                         )
                     }
                 ) { Text("Discuss in Chat") }

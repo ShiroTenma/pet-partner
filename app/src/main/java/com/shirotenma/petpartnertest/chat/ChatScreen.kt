@@ -12,13 +12,15 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.PhotoCamera
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Button
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.ProvideTextStyle
@@ -36,6 +38,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
@@ -44,6 +47,8 @@ import com.shirotenma.petpartnertest.chatbot.ChatContext
 import com.shirotenma.petpartnertest.chatbot.Sender
 import com.shirotenma.petpartnertest.chatbot.ChatMessage
 import kotlinx.coroutines.launch
+import android.content.Intent
+import android.net.Uri
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -81,12 +86,25 @@ fun ChatScreen(
         confidence?.let { append("Keyakinan model: ${(it * 100).toInt()}%\n") }
         append("Hasil AI hanya skrining awal, bukan diagnosis pasti.")
     }.trim()
-    val disclaimer = "Jika ragu atau gejala berat, segera konsultasi dokter hewan."
+    val disclaimer = if (supported)
+        "Jika ragu atau gejala berat, segera konsultasi dokter hewan."
+    else "Foto tidak terdeteksi kucing/anjing. Unggah foto baru yang jelas, atau hubungi klinik terdekat."
     val snackbar = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
+    val ctx = LocalContext.current
+    val actions = if (supported) quickActions else quickActions.filter { it.first.contains("Maps") }
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Vet Chat") }) },
+        topBar = {
+            TopAppBar(
+                title = { Text("Vet Chat") },
+                navigationIcon = {
+                    IconButton(onClick = { nav.popBackStack() }) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    }
+                }
+            )
+        },
         bottomBar = {
             Row(
                 modifier = Modifier
@@ -141,6 +159,17 @@ fun ChatScreen(
                         }
                         Text(contextText, style = MaterialTheme.typography.bodyMedium)
                         Text(disclaimer, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
+                        if (!supported) {
+                            ElevatedCard(
+                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer)
+                            ) {
+                                Text(
+                                    "Foto tidak terdeteksi kucing/anjing. Unggah foto yang lebih jelas.",
+                                    modifier = Modifier.padding(8.dp),
+                                    color = MaterialTheme.colorScheme.onErrorContainer
+                                )
+                            }
+                        }
                     }
                 }
             }
@@ -149,8 +178,24 @@ fun ChatScreen(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    quickActions.forEach { (label, query) ->
-                        Button(onClick = { vm.quickAsk(query) }) { Text(label) }
+                    actions.forEach { (label, query) ->
+                        val isMaps = label.contains("Maps", ignoreCase = true)
+                        Button(
+                            enabled = supported || isMaps,
+                            onClick = {
+                                if (isMaps) {
+                                    val intent = Intent(
+                                        Intent.ACTION_VIEW,
+                                        Uri.parse("https://www.google.com/maps/search/klinik+hewan+terdekat")
+                                    )
+                                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                    runCatching { ctx.startActivity(intent) }
+                                        .onFailure { scope.launch { snackbar.showSnackbar("Tidak bisa membuka Maps") } }
+                                } else {
+                                    vm.quickAsk(query)
+                                }
+                            }
+                        ) { Text(label) }
                     }
                 }
             }

@@ -18,7 +18,8 @@ data class DiagnosisResponse(
     val species: String?,
     val globalClass: String?,
     val detailClass: String?,
-    val isSupported: Boolean
+    val isSupported: Boolean,
+    val note: String?
 )
 
 @HiltViewModel
@@ -33,7 +34,7 @@ class DiagnosisViewModel @Inject constructor(
         photoUri: String
     ): DiagnosisResponse = withContext(Dispatchers.IO) {
         val uri = Uri.parse(photoUri)
-        val result = repo.diagnose(uri)
+        val result = repo.diagnose(uri, petId = petId)
         val info = DiseaseKnowledgeBase.items[result.detailClass ?: result.globalClass]
         val supported = result.isSupportedAnimal
         DiagnosisResponse(
@@ -49,7 +50,8 @@ class DiagnosisViewModel @Inject constructor(
             species = result.species.ifBlank { null },
             globalClass = result.globalClass.ifBlank { null },
             detailClass = result.detailClass,
-            isSupported = supported
+            isSupported = supported,
+            note = result.note
         )
     }
 

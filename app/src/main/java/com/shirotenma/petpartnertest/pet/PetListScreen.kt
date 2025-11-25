@@ -5,11 +5,12 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Assignment
+import androidx.compose.material.icons.automirrored.filled.Assignment
+import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.filled.CameraAlt
-import androidx.compose.material.icons.filled.Chat
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Event
 import androidx.compose.material3.*
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
@@ -111,7 +112,7 @@ fun PetListScreen(
                                     val sub = listOfNotNull(
                                         pet.species.ifBlank { null },
                                         pet.birthDate?.ifBlank { null }
-                                    ).joinToString(" • ")
+                                    ).joinToString(" – ")
                                     if (sub.isNotBlank()) Text(sub)
                                 },
                                 trailingContent = {
@@ -122,11 +123,15 @@ fun PetListScreen(
 
                                         IconButton(
                                             onClick = { nav.navigate("${Route.RECORDS}/${pet.id}") }
-                                        ) { Icon(Icons.Filled.Assignment, contentDescription = "Records") }
+                                        ) { Icon(Icons.AutoMirrored.Filled.Assignment, contentDescription = "Records") }
 
                                         IconButton(
                                             onClick = { nav.navigate("${Route.JOURNALS}/${pet.id}") }
                                         ) { Icon(Icons.Filled.Description, contentDescription = "Journals") }
+
+                                        IconButton(
+                                            onClick = { nav.navigate("${Route.SCHEDULES}/${pet.id}") }
+                                        ) { Icon(Icons.Filled.Event, contentDescription = "Schedules") }
 
                                         IconButton(
                                             onClick = { nav.navigate("${Route.SCAN}/${pet.id}") }
@@ -134,7 +139,7 @@ fun PetListScreen(
 
                                         IconButton(
                                             onClick = { nav.navigate("${Route.CHAT}?petId=${pet.id}") }
-                                        ) { Icon(Icons.Filled.Chat, contentDescription = "Chat") }
+                                        ) { Icon(Icons.AutoMirrored.Filled.Chat, contentDescription = "Chat") }
                                     }
                                 },
                                 modifier = Modifier
@@ -142,7 +147,7 @@ fun PetListScreen(
                                     .clickable { nav.navigate("${Route.RECORDS}/${pet.id}") }
                                     .padding(horizontal = 8.dp, vertical = 4.dp)
                             )
-                            Divider()
+                            HorizontalDivider()
                         }
                     }
                 }

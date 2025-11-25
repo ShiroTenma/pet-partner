@@ -1,4 +1,4 @@
-package com.shirotenma.petpartnertest.journal
+package com.shirotenma.petpartnertest.schedule
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -10,8 +10,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -28,29 +28,26 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.shirotenma.petpartnertest.Route
-import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun JournalListScreen(
+fun ScheduleListScreen(
     nav: NavController,
     petId: Long,
-    vm: JournalListViewModel = hiltViewModel()
+    vm: ScheduleListViewModel = hiltViewModel()
 ) {
-    LaunchedEffect(petId) { vm.observe(petId) }
+    LaunchedEffect(petId) { vm.load(petId) }
     val state by vm.state.collectAsState()
-    val scope = rememberCoroutineScope()
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Journals") },
+                title = { Text("Schedules") },
                 navigationIcon = {
                     IconButton(onClick = { nav.popBackStack() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
@@ -59,10 +56,8 @@ fun JournalListScreen(
             )
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = {
-                nav.navigate("${Route.JOURNAL_EDIT}/$petId")
-            }) {
-                Icon(Icons.Filled.Add, contentDescription = "Add Journal")
+            FloatingActionButton(onClick = { nav.navigate("${Route.SCHEDULE_EDIT}/$petId") }) {
+                Icon(Icons.Filled.Add, contentDescription = "Add schedule")
             }
         }
     ) { pad ->
@@ -73,11 +68,8 @@ fun JournalListScreen(
                         .padding(pad)
                         .fillMaxSize(),
                     verticalArrangement = Arrangement.Center
-                ) {
-                    CircularProgressIndicator(modifier = Modifier.padding(16.dp))
-                }
+                ) { CircularProgressIndicator(modifier = Modifier.padding(16.dp)) }
             }
-
             state.items.isEmpty() -> {
                 Column(
                     modifier = Modifier
@@ -86,11 +78,10 @@ fun JournalListScreen(
                         .padding(16.dp),
                     verticalArrangement = Arrangement.Center
                 ) {
-                    Text("No journal entries yet.", style = MaterialTheme.typography.bodyLarge)
-                    Text("Tap + to add your first entry.", style = MaterialTheme.typography.bodyMedium)
+                    Text("No schedules yet.", style = MaterialTheme.typography.bodyLarge)
+                    Text("Tap + to add a new one.", style = MaterialTheme.typography.bodyMedium)
                 }
             }
-
             else -> {
                 LazyColumn(
                     modifier = Modifier
@@ -99,26 +90,21 @@ fun JournalListScreen(
                     contentPadding = PaddingValues(16.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    items(state.items, key = { it.id }) { journal ->
+                    items(state.items, key = { it.id }) { item ->
                         Card(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clickable {
-                                    nav.navigate("${Route.JOURNAL_EDIT}/$petId/${journal.id}")
-                                },
+                                .clickable { nav.navigate("${Route.SCHEDULE_EDIT}/$petId/${item.id}") },
                             colors = CardDefaults.cardColors()
                         ) {
-                            Column(modifier = Modifier.padding(16.dp)) {
-                                Text(journal.date, style = MaterialTheme.typography.labelMedium)
-                                Text(journal.mood, style = MaterialTheme.typography.titleMedium)
-                                Text(
-                                    journal.content,
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    modifier = Modifier.padding(top = 4.dp)
-                                )
-                                IconButton(
-                                    onClick = { scope.launch { vm.delete(journal.id) } }
-                                ) {
+                            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                Text(item.title, style = MaterialTheme.typography.titleMedium)
+                                Text("${item.date} ${item.time}", style = MaterialTheme.typography.bodyMedium)
+                                Text(item.type, style = MaterialTheme.typography.labelMedium)
+                                item.notes?.takeIf { it.isNotBlank() }?.let {
+                                    Text(it, style = MaterialTheme.typography.bodySmall)
+                                }
+                                IconButton(onClick = { vm.delete(item.id) }) {
                                     Icon(Icons.Filled.Delete, contentDescription = "Delete")
                                 }
                             }

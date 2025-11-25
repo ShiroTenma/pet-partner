@@ -7,8 +7,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Send
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -66,7 +66,7 @@ fun JournalEditScreen(
                 title = { Text(title) },
                 navigationIcon = {
                     IconButton(onClick = { nav.popBackStack() }) {
-                        Icon(Icons.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 }
             )
@@ -123,7 +123,7 @@ fun JournalEditScreen(
                 modifier = Modifier.fillMaxWidth(),
                 enabled = ui?.saving != true && ui?.canShare == true
             ) {
-                Icon(Icons.Filled.Send, contentDescription = "Share")
+                Icon(Icons.AutoMirrored.Filled.Send, contentDescription = "Share")
                 Spacer(modifier = Modifier.padding(horizontal = 4.dp))
                 Text(if (ui?.canShare == true) "Bagikan sebagai Pesan Burung" else "Sudah mengirim")
             }
