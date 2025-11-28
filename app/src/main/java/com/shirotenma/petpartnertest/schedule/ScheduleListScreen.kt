@@ -7,12 +7,15 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.NotificationsOff
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -23,11 +26,14 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -43,6 +49,7 @@ fun ScheduleListScreen(
 ) {
     LaunchedEffect(petId) { vm.load(petId) }
     val state by vm.state.collectAsState()
+    val showConfirm = remember { mutableStateOf<Long?>(null) }
 
     Scaffold(
         topBar = {
@@ -104,8 +111,17 @@ fun ScheduleListScreen(
                                 item.notes?.takeIf { it.isNotBlank() }?.let {
                                     Text(it, style = MaterialTheme.typography.bodySmall)
                                 }
-                                IconButton(onClick = { vm.delete(item.id) }) {
-                                    Icon(Icons.Filled.Delete, contentDescription = "Delete")
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Icon(
+                                        if (item.remind) Icons.Filled.Notifications else Icons.Filled.NotificationsOff,
+                                        contentDescription = null
+                                    )
+                                    IconButton(onClick = { showConfirm.value = item.id }) {
+                                        Icon(Icons.Filled.Delete, contentDescription = "Delete")
+                                    }
                                 }
                             }
                         }
@@ -113,5 +129,17 @@ fun ScheduleListScreen(
                 }
             }
         }
+    }
+
+    showConfirm.value?.let { id ->
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { showConfirm.value = null },
+            title = { Text("Delete schedule?") },
+            text = { Text("This reminder will be removed.") },
+            confirmButton = {
+                TextButton(onClick = { vm.delete(id); showConfirm.value = null }) { Text("Delete") }
+            },
+            dismissButton = { TextButton(onClick = { showConfirm.value = null }) { Text("Cancel") } }
+        )
     }
 }

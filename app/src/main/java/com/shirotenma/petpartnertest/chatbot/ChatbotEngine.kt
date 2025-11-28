@@ -2,12 +2,16 @@ package com.shirotenma.petpartnertest.chatbot
 
 class ChatbotEngine(
     private val diseaseDb: Map<String, DiseaseInfo>
-) {
+)
+{
 
     private val disclaimerGeneral =
         "Hasil AI ini hanya skrining awal, bukan diagnosis pasti. Jika ragu atau gejala berat, segera ke dokter hewan."
 
-    private val emergencyKeywords = listOf("pendarahan", "berdarah", "kejang", "sulit bernapas", "susah napas", "sesak", "tidak mau makan", "tidak mau minum", "lemas", "pingsan", "muntah darah", "luka parah")
+    private val emergencyKeywords = listOf(
+        "pendarahan", "berdarah", "kejang", "sulit bernapas", "susah napas", "sesak",
+        "tidak mau makan", "tidak mau minum", "lemas", "pingsan", "muntah darah", "luka parah"
+    )
 
     fun introMessage(ctx: ChatContext): String {
         val base = "Hai! Aku asisten edukasi, bukan dokter. Hasil ini hanya skrining awal berbasis foto."
@@ -80,7 +84,7 @@ class ChatbotEngine(
                     "Ringkas: kemungkinan ${info!!.name}. ${info.shortDescription}. $conf $sevTxt $disclaimerGeneral"
                 }
             }
-            Intent.ASK_DOCTOR -> "Kalau gejala berat atau kamu ragu, sebaiknya buat janji dengan dokter hewan dalam 1–3 hari; jika gawat, segera ke klinik darurat. $disclaimerGeneral"
+            Intent.ASK_DOCTOR -> "Kalau gejala berat atau kamu ragu, sebaiknya buat janji dengan dokter hewan dalam 1-3 hari; jika gawat, segera ke klinik darurat. $disclaimerGeneral"
             Intent.ASK_WHATSAPP -> buildString {
                 append("Aku tidak bisa menghubungi klinik/dokter langsung atau mengakses lokasimu. ")
                 append("Silakan buka Google Maps, cari \"klinik hewan terdekat\", lalu bagikan linknya via WhatsApp ke klinik/dokter yang kamu percaya. ")
@@ -99,11 +103,11 @@ class ChatbotEngine(
 
     private fun formatList(title: String, items: List<String>): String =
         if (items.isEmpty()) "$title (data belum tersedia)"
-        else title + "\n" + items.joinToString("\n") { "• $it" }
+        else title + "\n" + items.joinToString("\n") { "- $it" }
 
     private fun unsupportedAnimalMessage(): String =
         "Dari analisis gambar, sistem tidak yakin ini adalah foto kucing atau anjing. " +
-                "Coba kirim ulang foto yang jelas menunjukkan hewan peliharaanmu (kucing atau anjing), dan hindari foto benda lain atau hewan selain kucing/anjing ya 🐾"
+                "Coba kirim ulang foto yang jelas menunjukkan hewan peliharaanmu (kucing atau anjing), dan hindari foto benda lain atau hewan selain kucing/anjing ya."
 
     private fun detectIntent(text: String): Intent = when {
         listOf("kelinci", "hamster", "burung", "sapi", "organ", "paru", "pencernaan").any { text.contains(it) } -> Intent.ASK_UNSUPPORTED
@@ -122,5 +126,16 @@ class ChatbotEngine(
 }
 
 private enum class Intent {
-    GREETING, ASK_FEATURE, ASK_RESULT_EXPLANATION, ASK_SYMPTOM, ASK_TREATMENT, ASK_PREVENTION, ASK_URGENCY, ASK_SUMMARY, ASK_DOCTOR, ASK_WHATSAPP, ASK_UNSUPPORTED, FALLBACK
+    GREETING,
+    ASK_FEATURE,
+    ASK_RESULT_EXPLANATION,
+    ASK_SYMPTOM,
+    ASK_TREATMENT,
+    ASK_PREVENTION,
+    ASK_URGENCY,
+    ASK_SUMMARY,
+    ASK_DOCTOR,
+    ASK_WHATSAPP,
+    ASK_UNSUPPORTED,
+    FALLBACK
 }

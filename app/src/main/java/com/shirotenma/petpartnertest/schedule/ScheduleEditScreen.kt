@@ -18,14 +18,23 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
+import android.Manifest
+import android.os.Build
+import android.content.pm.PackageManager
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.LocalTime
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -44,6 +53,36 @@ fun ScheduleEditScreen(
         return
     }
 
+    val snackbar = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+    val ctx = androidx.compose.ui.platform.LocalContext.current
+    val notifLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (!granted) scope.launch { snackbar.showSnackbar("Izinkan notifikasi agar reminder aktif.") }
+    }
+
+    fun ensureFutureDate(): Boolean {
+        return try {
+            val dt = LocalDateTime.of(LocalDate.parse(ui.date), LocalTime.parse(ui.time))
+            if (dt.isBefore(LocalDateTime.now())) {
+                scope.launch { snackbar.showSnackbar("Tanggal/jam sudah lewat.") }
+                false
+            } else true
+        } catch (_: Exception) {
+            scope.launch { snackbar.showSnackbar("Format tanggal/jam tidak valid.") }
+            false
+        }
+    }
+
+    fun requestNotifIfNeeded(): Boolean {
+        if (!ui.remind) return true
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return true
+        val granted = ContextCompat.checkSelfPermission(ctx, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
+        if (!granted) notifLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+        return granted
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -54,7 +93,8 @@ fun ScheduleEditScreen(
                     }
                 }
             )
-        }
+        },
+        snackbarHost = { SnackbarHost(snackbar) }
     ) { pad ->
         Column(
             modifier = Modifier
@@ -112,7 +152,11 @@ fun ScheduleEditScreen(
             }
 
             Button(
-                onClick = { vm.save { nav.popBackStack() } },
+                onClick = {
+                    if (!ensureFutureDate()) return@Button
+                    if (!requestNotifIfNeeded()) return@Button
+                    vm.save { nav.popBackStack() }
+                },
                 modifier = Modifier.fillMaxWidth(),
                 enabled = !ui.saving
             ) { Text(if (ui.saving) "Saving..." else "Save") }

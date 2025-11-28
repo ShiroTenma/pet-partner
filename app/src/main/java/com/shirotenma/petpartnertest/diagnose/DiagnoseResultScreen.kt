@@ -1,4 +1,3 @@
-// app/src/main/java/com/shirotenma/petpartnertest/diagnose/DiagnoseResultScreen.kt
 package com.shirotenma.petpartnertest.diagnose
 
 import androidx.compose.foundation.layout.Arrangement
@@ -20,10 +19,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -64,6 +63,22 @@ fun DiagnoseResultScreen(
                 .fillMaxSize(),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
+            if (!isSupported) {
+                ElevatedCard(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = androidx.compose.material3.CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.errorContainer
+                    )
+                ) {
+                    Text(
+                        "Hasil ditolak: sistem tidak yakin ini foto kucing/anjing. Unggah foto yang jelas dan fokus ke hewan peliharaanmu.",
+                        modifier = Modifier.padding(12.dp),
+                        color = MaterialTheme.colorScheme.onErrorContainer,
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+            }
+
             // Preview foto (opsional)
             if (!photoUri.isNullOrBlank()) {
                 AsyncImage(
@@ -82,14 +97,18 @@ fun DiagnoseResultScreen(
                     Text(text = "Confidence: ${(confidence * 100).toInt()}%")
                     if (!isSupported) {
                         Text(
-                            text = "Foto ini tidak terdeteksi kucing/anjing. Coba unggah foto yang lebih jelas.",
+                            text = "Foto ini tidak terdeteksi kucing/anjing atau belum cukup jelas. Coba unggah foto yang fokus ke hewan peliharaanmu.",
                             color = MaterialTheme.colorScheme.error,
                             style = MaterialTheme.typography.bodyMedium
                         )
                     }
-                    note?.let {
+                    note?.takeIf { it.isNotBlank() }?.let {
                         Text(it, style = MaterialTheme.typography.bodySmall)
                     }
+                    Text(
+                        "Hasil AI ini hanya skrining awal, bukan diagnosis pasti. Jika ragu atau gejala berat, segera ke dokter hewan.",
+                        style = MaterialTheme.typography.bodySmall
+                    )
                 }
             }
 
@@ -97,7 +116,7 @@ fun DiagnoseResultScreen(
                 ElevatedCard {
                     Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                         Text("Suggested Care", style = MaterialTheme.typography.titleMedium)
-                        tips.forEach { tip -> Text("• $tip") }
+                        tips.forEach { tip -> Text("- $tip") }
                     }
                 }
             }
@@ -110,7 +129,7 @@ fun DiagnoseResultScreen(
                 ) { Text("Unggah foto lain") }
             }
 
-            Spacer(Modifier.weight(1f))
+            Spacer(modifier = Modifier.height(8.dp))
 
             // Aksi utama
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -137,7 +156,7 @@ fun DiagnoseResultScreen(
                             }
                         }
                     }
-                ) { Text(if (saving) "Saving…" else if (isSupported) "Save to records" else "Unsupported") }
+                ) { Text(if (saving) "Saving..." else if (isSupported) "Save to records" else "Unsupported") }
 
                 OutlinedButton(
                     onClick = {
@@ -151,15 +170,14 @@ fun DiagnoseResultScreen(
                         )
                     }
                 ) { Text("Discuss in Chat") }
-                // diagnose/DiagnoseResultScreen.kt (di bagian tombol aksi)
                 OutlinedButton(onClick = {
                     val text = buildString {
                         append("Diagnosis: $condition\n")
                         append("Severity: $severity\n")
-                        append("Confidence: ${"%.0f%%".format(confidence*100)}\n")
+                        append("Confidence: ${"%.0f%%".format(confidence * 100)}\n")
                         if (tips.isNotEmpty()) {
                             append("Tips:\n")
-                            tips.forEach { append("• $it\n") }
+                            tips.forEach { append("- $it\n") }
                         }
                         photoUri?.let { append("\nPhoto: $it") }
                     }
@@ -170,11 +188,9 @@ fun DiagnoseResultScreen(
                     }
                     nav.context.startActivity(android.content.Intent.createChooser(intent, "Share diagnosis"))
                 }) { Text("Share") }
-
-
             }
 
-            // “Toast” sederhana
+            // Toast sederhana
             if (toast != null) {
                 LaunchedEffect(toast) {
                     kotlinx.coroutines.delay(1500)

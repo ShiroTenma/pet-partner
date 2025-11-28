@@ -117,12 +117,12 @@ fun ScanScreen(
                 }
             } else {
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Button(onClick = { askCamera() }) { Text("Ambil Foto") }
+                    Button(onClick = { askCamera() }, enabled = !loading) { Text("Ambil Foto") }
                     OutlinedButton(onClick = {
                         pickPhoto.launch(
                             PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
                         )
-                    }) { Text("Pilih dari Galeri") }
+                    }, enabled = !loading) { Text("Pilih dari Galeri") }
                 }
 
                 if (photoUri != null) {
@@ -131,11 +131,25 @@ fun ScanScreen(
                         enabled = !loading,
                         onClick = { doDiagnose(photoUri!!) }
                     ) { Text(if (loading) "Memproses..." else "Kirim Diagnosis") }
+                    OutlinedButton(
+                        enabled = !loading,
+                        onClick = { photoUri = null }
+                    ) { Text("Ganti foto") }
                 }
             }
 
-            if (error != null) {
-                Text(error!!, color = MaterialTheme.colorScheme.error)
+            if (loading) {
+                LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+            }
+
+            Text(
+                "Hanya mendukung foto kucing/anjing. Jika gambar bukan hewan tersebut, hasil bisa ditolak.",
+                style = MaterialTheme.typography.bodySmall
+            )
+
+            error?.let {
+                Text(it, color = MaterialTheme.colorScheme.error)
+                OutlinedButton(onClick = { error = null }) { Text("Coba lagi") }
             }
         }
     }

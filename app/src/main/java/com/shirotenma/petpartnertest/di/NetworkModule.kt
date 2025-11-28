@@ -2,6 +2,7 @@
 package com.shirotenma.petpartnertest.di
 
 import com.shirotenma.petpartnertest.data.ApiService
+import com.shirotenma.petpartnertest.data.MockApiService
 import com.shirotenma.petpartnertest.diagnose.net.DiagnosisApi
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
@@ -21,11 +22,11 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 object NetworkModule {
 
-    private const val USE_MOCK = false
+    private const val USE_MOCK = true
 
     @Provides
     @Named("baseUrl")
-    fun baseUrl(): String = "http://192.168.100.134:8000/"
+    fun baseUrl(): String = "http://10.160.20.190:8000/"
 
     @Provides
     @Singleton
@@ -62,7 +63,8 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    fun api(retrofit: Retrofit): ApiService = retrofit.create(ApiService::class.java)
+    fun api(retrofit: Retrofit): ApiService =
+        if (USE_MOCK) MockApiService() else retrofit.create(ApiService::class.java)
 
     @Provides
     @Singleton

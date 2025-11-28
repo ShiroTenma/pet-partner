@@ -37,14 +37,21 @@ class DiagnosisViewModel @Inject constructor(
         val result = repo.diagnose(uri, petId = petId)
         val info = DiseaseKnowledgeBase.items[result.detailClass ?: result.globalClass]
         val supported = result.isSupportedAnimal
+        val isNotPet = result.globalClass.equals("not_pet", ignoreCase = true) || result.species.isBlank()
+        val conditionLabel = when {
+            supported -> result.detailClass ?: result.globalClass.ifBlank { "Unknown" }
+            isNotPet -> "Gambar bukan kucing/anjing"
+            else -> "Unknown (unsupported image)"
+        }
+        val severityLabel = when {
+            !supported -> "unsupported"
+            result.globalClass.contains("healthy", ignoreCase = true) -> "healthy"
+            result.globalClass.isBlank() -> "unknown"
+            else -> "skin_issue"
+        }
         DiagnosisResponse(
-            condition = if (supported) result.detailClass ?: result.globalClass.ifBlank { "Unknown" } else "Unknown (unsupported image)",
-            severity = when {
-                !supported -> "unknown"
-                result.globalClass.contains("healthy", ignoreCase = true) -> "healthy"
-                result.globalClass.isBlank() -> "unknown"
-                else -> "skin_issue"
-            },
+            condition = conditionLabel,
+            severity = severityLabel,
             confidence = result.detailConf ?: result.globalConf,
             tips = if (supported) info?.homeCareTips ?: emptyList() else emptyList(),
             species = result.species.ifBlank { null },
